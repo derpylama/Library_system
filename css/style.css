@@ -1,0 +1,66 @@
+* {
+    font-family: Arial, sans-serif;
+}
+
+:root {
+    --button-color: #007BFF;
+    --button-selected-color: #0056b3;
+    --button-disabled-color: #888;
+
+    --action-button-color: grey;
+    --action-button-hover-color: rgb(99, 99, 99);
+
+    --admin-button-color: #28a745;
+    --admin-button-hover-color: #218838;
+
+    --logout-button-color: #dc3545;
+    --logout-button-hover-color: #a11e2b;
+
+    --card-box-shadow-color: rgba(0,0,0,0.2);
+
+    --table-row-bg-color: #f9f9f9;
+}
+
+body {
+    background-color: #e0e2e7;
+}
+
+.nav-button, .nav-button:active {
+    background-color: var(--button-color);
+}
+.nav-button:hover:not(:disabled) {
+    background-color: var(--button-selected-color);
+}
+.nav-button:disabled {
+    background-color: var(--button-disabled-color);
+}
+
+.action-button, .action-button:active {
+    background-color: var(--action-button-color);
+}
+.action-button:hover:not(:disabled) {
+    background-color: var(--action-button-hover-color);
+}
+.action-button:disabled {
+    background-color: var(--button-disabled-color);
+}
+
+.admin-button, .admin-button:active {
+    background-color: var(--admin-button-color);
+}
+.admin-button:hover:not(:disabled) {
+    background-color: var(--admin-button-hover-color);
+}
+.admin-button:disabled {
+    background-color: var(--button-disabled-color);
+}
+
+.logout-button, .logout-button:active {
+    background-color: var(--logout-button-color);
+}
+.logout-button:hover:not(:disabled) {
+    background-color: var(--logout-button-hover-color);
+}
+.logout-button:disabled {
+    background-color: var(--button-disabled-color);
+}

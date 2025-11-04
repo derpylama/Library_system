@@ -109,18 +109,19 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title>User Dashboard</title>
     <link rel="stylesheet" href="css/user_dashboard.css">
+    <link rel="stylesheet" href="css/style.css">
     <script src="js/user_dashboard.js"></script>
 </head>
 <body>
     <div class="header">
         <h2>Welcome, <?php echo htmlspecialchars($username); ?></h2>
         <div>
-            <button class="toggle-btn" onclick="toggleView('media')">All Media</button>
-            <button class="toggle-btn" onclick="toggleView('loans')">My Loans</button>
+            <button class="toggle-btn nav-button" onclick="toggleView('media')">All Media</button>
+            <button class="toggle-btn nav-button" onclick="toggleView('loans')">My Loans</button>
             <?php if ($isAdmin): ?>
-                <a href="admin.php" class="toggle-btn admin-btn">Admin Panel</a>
+                <a href="admin.php" class="toggle-btn admin-button">Admin Panel</a>
             <?php endif; ?>
-            <a href="logout.php" class="toggle-btn" style="background:#dc3545;">Logout</a>
+            <a href="logout.php" class="toggle-btn logout-button">Logout</a>
         </div>
     </div>
 
