@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT is_admin FROM user WHERE id = ?");
 $stmt->execute([$userId]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch();
 
 if (!$user || $user['is_admin'] != 1) {
     echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
@@ -119,8 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan'])) {
 }
 
 // --- FETCH DATA ---
-$categories = $pdo->query("SELECT id, name FROM category ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-$users = $pdo->query("SELECT id, username, password_, is_admin, created_at FROM user ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
+$categories = $pdo->query("SELECT id, name FROM category ORDER BY name")->fetchAll();
+$users = $pdo->query("SELECT id, username, password_, is_admin, created_at FROM user ORDER BY id")->fetchAll();
 $media = $pdo->query("
     SELECT m.id, m.isbn, m.title, m.author, m.media_type, c.name AS category, m.category_id, m.description, m.price, COUNT(cp.id) AS copies
     FROM media m
@@ -128,7 +128,7 @@ $media = $pdo->query("
     LEFT JOIN copy cp ON cp.media_id = m.id
     GROUP BY m.id
     ORDER BY m.title
-")->fetchAll(PDO::FETCH_ASSOC);
+")->fetchAll();
 $loans = $pdo->query("
     SELECT l.id, u.username, m.title, c.barcode, l.loan_date, l.due_date, l.return_date, l.status
     FROM loan l
@@ -136,7 +136,7 @@ $loans = $pdo->query("
     JOIN copy c ON c.id = l.copy_id
     JOIN media m ON c.media_id = m.id
     ORDER BY l.loan_date DESC
-")->fetchAll(PDO::FETCH_ASSOC);
+")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -327,7 +327,7 @@ $loans = $pdo->query("
                 <th>Actions</th>
             </tr>
             <?php
-            $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+            $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll();
             foreach ($copies as $cp): ?>
             <tr>
                 <td><?php echo $cp['id']; ?></td>
