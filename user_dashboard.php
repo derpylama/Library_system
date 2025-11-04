@@ -1,6 +1,7 @@
 <?php
+require_once('php/db.php');
+
 session_start();
-require 'db.php';
 
 // Redirect to login if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -101,172 +102,105 @@ $invoiceStmt = $pdo->prepare("SELECT * FROM invoice WHERE user_id = ? ORDER BY i
 $invoiceStmt->execute([$userId]);
 $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>User Dashboard</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f6fa;
-    padding: 20px;
-}
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-button, .toggle-btn {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.toggle-btn {
-    margin-left: 10px;
-}
-button:disabled {
-    background-color: #888;
-}
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-.card {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-.message {
-    margin-top: 15px;
-    background: #e6ffe6;
-    border: 1px solid #b3ddb3;
-    padding: 10px;
-    border-radius: 5px;
-}
-.overdue {
-    color: red;
-    font-weight: bold;
-}
-.returned {
-    color: green;
-}
-.invoice {
-    margin-top: 20px;
-    background: #fff7f7;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ffcccc;
-}
-.hidden { display: none; }
-.admin-btn {
-    background-color: #28a745;
-}
-</style>
-<script>
-function toggleView(view) {
-    document.getElementById('media-view').classList.add('hidden');
-    document.getElementById('loans-view').classList.add('hidden');
-    document.getElementById(view + '-view').classList.remove('hidden');
-}
-</script>
+    <meta charset="UTF-8">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="css/user_dashboard.css">
+    <script src="js/user_dashboard.js"></script>
 </head>
 <body>
-<div class="header">
-    <h2>Welcome, <?php echo htmlspecialchars($username); ?></h2>
-    <div>
-        <button class="toggle-btn" onclick="toggleView('media')">All Media</button>
-        <button class="toggle-btn" onclick="toggleView('loans')">My Loans</button>
-        <?php if ($isAdmin): ?>
-            <a href="admin.php" class="toggle-btn admin-btn">Admin Panel</a>
-        <?php endif; ?>
-        <a href="logout.php" class="toggle-btn" style="background:#dc3545;">Logout</a>
+    <div class="header">
+        <h2>Welcome, <?php echo htmlspecialchars($username); ?></h2>
+        <div>
+            <button class="toggle-btn" onclick="toggleView('media')">All Media</button>
+            <button class="toggle-btn" onclick="toggleView('loans')">My Loans</button>
+            <?php if ($isAdmin): ?>
+                <a href="admin.php" class="toggle-btn admin-btn">Admin Panel</a>
+            <?php endif; ?>
+            <a href="logout.php" class="toggle-btn" style="background:#dc3545;">Logout</a>
+        </div>
     </div>
-</div>
 
-<?php if ($message): ?>
-<div class="message"><?php echo htmlspecialchars($message); ?></div>
-<?php endif; ?>
+    <?php if ($message): ?>
+    <div class="message"><?php echo htmlspecialchars($message); ?></div>
+    <?php endif; ?>
 
-<!-- All Media View -->
-<div id="media-view" class="grid">
-<?php foreach ($mediaList as $media): ?>
-    <div class="card">
-        <h3><?php echo htmlspecialchars($media['title']); ?></h3>
-        <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
-        <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
-        <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
-        <p>
-            <strong>Total:</strong> <?php echo $media['total_copies'] ?? 0; ?><br>
-            <strong>Available:</strong> <?php echo $media['available_copies'] ?? 0; ?><br>
-            <strong>Loaned:</strong> <?php echo $media['loaned_copies'] ?? 0; ?>
-        </p>
-        <form method="POST">
-            <input type="hidden" name="media_id" value="<?php echo $media['id']; ?>">
-            <button type="submit" <?php echo ($media['available_copies'] == 0) ? 'disabled' : ''; ?>>
-                <?php echo ($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media'; ?>
-            </button>
-        </form>
-    </div>
-<?php endforeach; ?>
-</div>
-
-<!-- My Loans View -->
-<div id="loans-view" class="hidden">
-<h3>My Loans</h3>
-<?php if (empty($userLoans)): ?>
-    <p>You currently have no loans.</p>
-<?php else: ?>
-    <div class="grid">
-        <?php foreach ($userLoans as $loan): ?>
-            <div class="card">
-                <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
-                <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
-                <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
-                <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
-                <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
-                <?php if ($loan['status'] === 'active'): ?>
-                    <p>
-                        <?php
-                        $days = $loan['days_left'];
-                        if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
-                        else echo "Due in $days days";
-                        ?>
-                    </p>
-                    <form method="POST">
-                        <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
-                        <button type="submit">Return Media</button>
-                    </form>
-                <?php elseif ($loan['status'] === 'returned'): ?>
-                    <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
-                <?php else: ?>
-                    <p class="overdue">Written off / overdue</p>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
-    </div>
-<?php endif; ?>
-
-<!-- Invoices -->
-<h3>Your Invoices</h3>
-<?php if (empty($invoices)): ?>
-    <p>No invoices.</p>
-<?php else: ?>
-    <?php foreach ($invoices as $inv): ?>
-        <div class="invoice">
-            <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
-            <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
-            <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
-            <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
+    <!-- All Media View -->
+    <div id="media-view" class="grid">
+    <?php foreach ($mediaList as $media): ?>
+        <div class="card">
+            <h3><?php echo htmlspecialchars($media['title']); ?></h3>
+            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
+            <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
+            <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
+            <p>
+                <strong>Total:</strong> <?php echo $media['total_copies'] ?? 0; ?><br>
+                <strong>Available:</strong> <?php echo $media['available_copies'] ?? 0; ?><br>
+                <strong>Loaned:</strong> <?php echo $media['loaned_copies'] ?? 0; ?>
+            </p>
+            <form method="POST">
+                <input type="hidden" name="media_id" value="<?php echo $media['id']; ?>">
+                <button type="submit" <?php echo ($media['available_copies'] == 0) ? 'disabled' : ''; ?>>
+                    <?php echo ($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media'; ?>
+                </button>
+            </form>
         </div>
     <?php endforeach; ?>
-<?php endif; ?>
-</div>
+    </div>
+
+    <!-- My Loans View -->
+    <div id="loans-view" class="hidden">
+    <h3>My Loans</h3>
+    <?php if (empty($userLoans)): ?>
+        <p>You currently have no loans.</p>
+    <?php else: ?>
+        <div class="grid">
+            <?php foreach ($userLoans as $loan): ?>
+                <div class="card">
+                    <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
+                    <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
+                    <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
+                    <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
+                    <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
+                    <?php if ($loan['status'] === 'active'): ?>
+                        <p>
+                            <?php
+                            $days = $loan['days_left'];
+                            if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
+                            else echo "Due in $days days";
+                            ?>
+                        </p>
+                        <form method="POST">
+                            <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
+                            <button type="submit">Return Media</button>
+                        </form>
+                    <?php elseif ($loan['status'] === 'returned'): ?>
+                        <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
+                    <?php else: ?>
+                        <p class="overdue">Written off / overdue</p>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Invoices -->
+    <h3>Your Invoices</h3>
+    <?php if (empty($invoices)): ?>
+        <p>No invoices.</p>
+    <?php else: ?>
+        <?php foreach ($invoices as $inv): ?>
+            <div class="invoice">
+                <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
+                <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
+                <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
+                <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+    </div>
 </body>
 </html>

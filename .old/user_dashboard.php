@@ -1,0 +1,272 @@
+<?php
+session_start();
+require 'db.php';
+
+// Redirect to login if not logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: index.php');
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+$username = $_SESSION['username'];
+
+// Fetch user role
+$stmt = $pdo->prepare("SELECT is_admin FROM user WHERE id = ?");
+$stmt->execute([$userId]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$isAdmin = $user && $user['is_admin'] == 1;
+
+$message = "";
+
+// Handle loan creation
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['media_id'])) {
+    $mediaId = (int)$_POST['media_id'];
+    $stmt = $pdo->prepare("SELECT id FROM copy WHERE media_id = ? AND status = 'available' LIMIT 1");
+    $stmt->execute([$mediaId]);
+    $copy = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($copy) {
+        $copyId = $copy['id'];
+        $loanDate = date('Y-m-d');
+        $dueDate = date('Y-m-d', strtotime('+21 days'));
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare("INSERT INTO loan (copy_id, user_id, loan_date, due_date, status) VALUES (?, ?, ?, ?, 'active')")
+                ->execute([$copyId, $userId, $loanDate, $dueDate]);
+            $pdo->prepare("UPDATE copy SET status = 'on_loan' WHERE id = ?")->execute([$copyId]);
+            $pdo->commit();
+            $message = "Successfully loaned media ID $mediaId!";
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $message = "Error processing loan: " . $e->getMessage();
+        }
+    } else {
+        $message = "No available copies for this media.";
+    }
+}
+
+// Handle returning a loan
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_loan_id'])) {
+    $loanId = (int)$_POST['return_loan_id'];
+    $pdo->beginTransaction();
+    try {
+        $loanStmt = $pdo->prepare("SELECT * FROM loan WHERE id = ? AND user_id = ?");
+        $loanStmt->execute([$loanId, $userId]);
+        $loan = $loanStmt->fetch();
+        if ($loan && $loan['status'] === 'active') {
+            $pdo->prepare("UPDATE loan SET status = 'returned', return_date = CURDATE() WHERE id = ?")->execute([$loanId]);
+            $pdo->prepare("UPDATE copy SET status = 'available' WHERE id = ?")->execute([$loan['copy_id']]);
+            $message = "Returned loan #$loanId successfully.";
+        } else {
+            $message = "Loan not found or already returned.";
+        }
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $message = "Error returning loan: " . $e->getMessage();
+    }
+}
+
+// Fetch all media
+$mediaQuery = "
+SELECT 
+  m.id, m.title, m.author, m.media_type, m.description,
+  COUNT(c.id) AS total_copies,
+  SUM(CASE WHEN c.status = 'available' THEN 1 ELSE 0 END) AS available_copies,
+  SUM(CASE WHEN c.status = 'on_loan' THEN 1 ELSE 0 END) AS loaned_copies
+FROM media m
+LEFT JOIN copy c ON c.media_id = m.id
+GROUP BY m.id
+ORDER BY m.title;
+";
+$mediaList = $pdo->query($mediaQuery)->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch user's active and past loans
+$loanQuery = "
+SELECT l.*, m.title, m.author, c.barcode, m.price, 
+DATEDIFF(l.due_date, CURDATE()) AS days_left
+FROM loan l
+JOIN copy c ON l.copy_id = c.id
+JOIN media m ON c.media_id = m.id
+WHERE l.user_id = ?
+ORDER BY l.loan_date DESC;
+";
+$loanStmt = $pdo->prepare($loanQuery);
+$loanStmt->execute([$userId]);
+$userLoans = $loanStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch user invoices
+$invoiceStmt = $pdo->prepare("SELECT * FROM invoice WHERE user_id = ? ORDER BY issued_at DESC");
+$invoiceStmt->execute([$userId]);
+$invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>User Dashboard</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f6fa;
+    padding: 20px;
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+button, .toggle-btn {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.toggle-btn {
+    margin-left: 10px;
+}
+button:disabled {
+    background-color: #888;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.message {
+    margin-top: 15px;
+    background: #e6ffe6;
+    border: 1px solid #b3ddb3;
+    padding: 10px;
+    border-radius: 5px;
+}
+.overdue {
+    color: red;
+    font-weight: bold;
+}
+.returned {
+    color: green;
+}
+.invoice {
+    margin-top: 20px;
+    background: #fff7f7;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ffcccc;
+}
+.hidden { display: none; }
+.admin-btn {
+    background-color: #28a745;
+}
+</style>
+<script>
+function toggleView(view) {
+    document.getElementById('media-view').classList.add('hidden');
+    document.getElementById('loans-view').classList.add('hidden');
+    document.getElementById(view + '-view').classList.remove('hidden');
+}
+</script>
+</head>
+<body>
+<div class="header">
+    <h2>Welcome, <?php echo htmlspecialchars($username); ?></h2>
+    <div>
+        <button class="toggle-btn" onclick="toggleView('media')">All Media</button>
+        <button class="toggle-btn" onclick="toggleView('loans')">My Loans</button>
+        <?php if ($isAdmin): ?>
+            <a href="admin.php" class="toggle-btn admin-btn">Admin Panel</a>
+        <?php endif; ?>
+        <a href="logout.php" class="toggle-btn" style="background:#dc3545;">Logout</a>
+    </div>
+</div>
+
+<?php if ($message): ?>
+<div class="message"><?php echo htmlspecialchars($message); ?></div>
+<?php endif; ?>
+
+<!-- All Media View -->
+<div id="media-view" class="grid">
+<?php foreach ($mediaList as $media): ?>
+    <div class="card">
+        <h3><?php echo htmlspecialchars($media['title']); ?></h3>
+        <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
+        <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
+        <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
+        <p>
+            <strong>Total:</strong> <?php echo $media['total_copies'] ?? 0; ?><br>
+            <strong>Available:</strong> <?php echo $media['available_copies'] ?? 0; ?><br>
+            <strong>Loaned:</strong> <?php echo $media['loaned_copies'] ?? 0; ?>
+        </p>
+        <form method="POST">
+            <input type="hidden" name="media_id" value="<?php echo $media['id']; ?>">
+            <button type="submit" <?php echo ($media['available_copies'] == 0) ? 'disabled' : ''; ?>>
+                <?php echo ($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media'; ?>
+            </button>
+        </form>
+    </div>
+<?php endforeach; ?>
+</div>
+
+<!-- My Loans View -->
+<div id="loans-view" class="hidden">
+<h3>My Loans</h3>
+<?php if (empty($userLoans)): ?>
+    <p>You currently have no loans.</p>
+<?php else: ?>
+    <div class="grid">
+        <?php foreach ($userLoans as $loan): ?>
+            <div class="card">
+                <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
+                <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
+                <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
+                <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
+                <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
+                <?php if ($loan['status'] === 'active'): ?>
+                    <p>
+                        <?php
+                        $days = $loan['days_left'];
+                        if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
+                        else echo "Due in $days days";
+                        ?>
+                    </p>
+                    <form method="POST">
+                        <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
+                        <button type="submit">Return Media</button>
+                    </form>
+                <?php elseif ($loan['status'] === 'returned'): ?>
+                    <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
+                <?php else: ?>
+                    <p class="overdue">Written off / overdue</p>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+<!-- Invoices -->
+<h3>Your Invoices</h3>
+<?php if (empty($invoices)): ?>
+    <p>No invoices.</p>
+<?php else: ?>
+    <?php foreach ($invoices as $inv): ?>
+        <div class="invoice">
+            <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
+            <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
+            <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
+            <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
+</div>
+</body>
+</html>

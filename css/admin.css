@@ -1,0 +1,84 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    padding: 20px;
+}
+h1 { color: #333; }
+.message {
+    background: #e9f5e9;
+    border: 1px solid #b3ddb3;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+nav { margin-bottom: 20px; }
+nav button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    margin-right: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+nav button.active { background-color: #0056b3; }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+th {
+    background: #007BFF;
+    color: white;
+}
+tr:nth-child(even) { background: #f9f9f9; }
+button.delete {
+    background: grey;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button.edit {
+    background: grey;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+form.add-form, form.edit-form {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+form.add-form input, form.add-form select, form.add-form textarea,
+form.edit-form input, form.edit-form select, form.edit-form textarea {
+    width: 100%;
+    margin: 5px 0;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+form.add-form button, form.edit-form button {
+    margin-top: 10px;
+    background: grey;
+    color: white;
+}
+.hidden { display: none; }
+.back {
+    text-decoration: none;
+    color: white;
+    background: #6c757d;
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin-top: 10px;
+    display: inline-block;
+}

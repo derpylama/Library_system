@@ -1,6 +1,7 @@
 <?php
+require_once('php/db.php');
+
 session_start();
-require 'db.php';
 
 // --- AUTH ---
 if (!isset($_SESSION['user_id'])) {
@@ -137,368 +138,255 @@ $loans = $pdo->query("
     ORDER BY l.loan_date DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Admin Dashboard</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    padding: 20px;
-}
-h1 { color: #333; }
-.message {
-    background: #e9f5e9;
-    border: 1px solid #b3ddb3;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-}
-nav { margin-bottom: 20px; }
-nav button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    margin-right: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-nav button.active { background-color: #0056b3; }
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-th {
-    background: #007BFF;
-    color: white;
-}
-tr:nth-child(even) { background: #f9f9f9; }
-button.delete {
-    background: grey;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-button.edit {
-    background: grey;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-form.add-form, form.edit-form {
-    background: #ffffff;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-form.add-form input, form.add-form select, form.add-form textarea,
-form.edit-form input, form.edit-form select, form.edit-form textarea {
-    width: 100%;
-    margin: 5px 0;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-form.add-form button, form.edit-form button {
-    margin-top: 10px;
-    background: grey;
-    color: white;
-}
-.hidden { display: none; }
-.back {
-    text-decoration: none;
-    color: white;
-    background: #6c757d;
-    padding: 8px 12px;
-    border-radius: 5px;
-    margin-top: 10px;
-    display: inline-block;
-}
-</style>
-<script>
-function showTab(tabName) {
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
-    document.getElementById(tabName).classList.remove('hidden');
-    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(tabName + '-btn').classList.add('active');
-}
-
-// Handle edit form toggles for both Users and Media
-function toggleEditForm(id, type = 'media') {
-    let formId = '';
-    if (type === 'user') {
-        formId = 'edit-form-user-' + id;
-    } else if (type === 'copy') {
-    formId = 'edit-form-copy-' + id;
-    } else {
-        formId = 'edit-form-media-' + id;
-    }
-    const form = document.getElementById(formId);
-    if (form) form.classList.toggle('hidden');
-}
-
-// Default tab on load
-document.addEventListener('DOMContentLoaded', () => showTab('users'));
-</script>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="js/admin.js" defer></script>
 </head>
 <body>
-<h1>Admin Dashboard</h1>
+    <h1>Admin Dashboard</h1>
 
-<nav>
-    <button id="users-btn" class="active" onclick="showTab('users')">Users</button>
-    <button id="media-btn" onclick="showTab('media')">Media</button>
-    <button id="copies-btn" onclick="showTab('copies')">Copies</button>
-    <button id="loans-btn" onclick="showTab('loans')">Loans</button>
-    <a href="user_dashboard.php" class="back">← Back to User view</a>
-</nav>
+    <nav>
+        <button id="users-btn" class="active" onclick="showTab('users')">Users</button>
+        <button id="media-btn" onclick="showTab('media')">Media</button>
+        <button id="copies-btn" onclick="showTab('copies')">Copies</button>
+        <button id="loans-btn" onclick="showTab('loans')">Loans</button>
+        <a href="user_dashboard.php" class="back">← Back to User view</a>
+    </nav>
 
-<?php if ($message): ?>
-<div class="message"><?php echo htmlspecialchars($message); ?></div>
-<?php endif; ?>
+    <?php if ($message): ?>
+    <div class="message"><?php echo htmlspecialchars($message); ?></div>
+    <?php endif; ?>
 
-<!-- USERS TAB -->
-<div id="users" class="tab">
-    <h2>Users</h2>
-    <table>
-        <tr><th>ID</th><th>Username</th><th>Password</th><th>Admin</th><th>Created</th><th>Actions</th></tr>
-        <?php foreach ($users as $u): ?>
-        <tr>
-            <td><?php echo $u['id']; ?></td>
-            <td><?php echo htmlspecialchars($u['username']); ?></td>
-            <td><?php echo htmlspecialchars($u['password_']); ?></td>
-            <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
-            <td><?php echo $u['created_at']; ?></td>
-            <td>
-                <button type="button" class="edit" onclick="toggleEditForm(<?php echo $u['id']; ?>, 'user')">Edit</button>
-                <?php if ($u['id'] != $userId): ?>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="delete_user" value="<?php echo $u['id']; ?>">
-                    <button class="delete" type="submit">Delete</button>
-                </form>
-                <?php else: ?>—<?php endif; ?>
-            </td>
-        </tr>
-        <tr id="edit-form-user-<?php echo $u['id']; ?>" class="hidden">
-            <td colspan="6">
-                <form method="POST" class="edit-form">
-                    <input type="hidden" name="edit_user" value="<?php echo $u['id']; ?>">
-                    <label>Username:</label>
-                    <input type="text" name="username" value="<?php echo htmlspecialchars($u['username']); ?>" required>
+    <!-- USERS TAB -->
+    <div id="users" class="tab">
+        <h2>Users</h2>
+        <table>
+            <tr><th>ID</th><th>Username</th><th>Password</th><th>Admin</th><th>Created</th><th>Actions</th></tr>
+            <?php foreach ($users as $u): ?>
+            <tr>
+                <td><?php echo $u['id']; ?></td>
+                <td><?php echo htmlspecialchars($u['username']); ?></td>
+                <td><?php echo htmlspecialchars($u['password_']); ?></td>
+                <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
+                <td><?php echo $u['created_at']; ?></td>
+                <td>
+                    <button type="button" class="edit" onclick="toggleEditForm(<?php echo $u['id']; ?>, 'user')">Edit</button>
+                    <?php if ($u['id'] != $userId): ?>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="delete_user" value="<?php echo $u['id']; ?>">
+                        <button class="delete" type="submit">Delete</button>
+                    </form>
+                    <?php else: ?>—<?php endif; ?>
+                </td>
+            </tr>
+            <tr id="edit-form-user-<?php echo $u['id']; ?>" class="hidden">
+                <td colspan="6">
+                    <form method="POST" class="edit-form">
+                        <input type="hidden" name="edit_user" value="<?php echo $u['id']; ?>">
+                        <label>Username:</label>
+                        <input type="text" name="username" value="<?php echo htmlspecialchars($u['username']); ?>" required>
 
-                    <label>New Password (leave blank to keep current):</label>
-                    <input type="text" name="new_password" placeholder="Enter new password">
+                        <label>New Password (leave blank to keep current):</label>
+                        <input type="text" name="new_password" placeholder="Enter new password">
 
-                    <label>Admin:</label>
-                    <select name="is_admin">
-                        <option value="0" <?php if(!$u['is_admin']) echo 'selected'; ?>>No</option>
-                        <option value="1" <?php if($u['is_admin']) echo 'selected'; ?>>Yes</option>
-                    </select>
+                        <label>Admin:</label>
+                        <select name="is_admin">
+                            <option value="0" <?php if(!$u['is_admin']) echo 'selected'; ?>>No</option>
+                            <option value="1" <?php if($u['is_admin']) echo 'selected'; ?>>Yes</option>
+                        </select>
 
-                    <button type="submit">Save Changes</button>
-                </form>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-</div>
-
-<!-- MEDIA TAB -->
-<div id="media" class="tab hidden">
-    <h2>Media</h2>
-
-    <!-- Add Media Form -->
-    <form method="POST" class="add-form">
-        <h3>Add New Media</h3>
-        <input type="text" name="isbn" placeholder="ISBN" required>
-        <input type="text" name="title" placeholder="Title" required>
-        <input type="text" name="author" placeholder="Author" required>
-        <select name="media_type">
-            <option value="bok">Book</option>
-            <option value="ljudbok">Audiobook</option>
-            <option value="film">Film</option>
-        </select>
-        <select name="category_id" required>
-            <option value="">-- Select Category --</option>
-            <?php foreach ($categories as $c): ?>
-                <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option>
+                        <button type="submit">Save Changes</button>
+                    </form>
+                </td>
+            </tr>
             <?php endforeach; ?>
-        </select>
-        <textarea name="description" placeholder="Description"></textarea>
-        <input type="number" step="0.01" name="price" placeholder="Price (kr)">
-        <button type="submit" name="add_media">Add Media</button>
-    </form>
+        </table>
+    </div>
 
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>ISBN</th>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Media Type</th>
-            <th>Category ID</th>
-            <th>Description</th>
-            <th>Price</th>
-            <th>Actions</th>
-        </tr>
-        <?php foreach ($media as $m): ?>
-        <tr>
-            <td><?php echo $m['id']; ?></td>
-            <td><?php echo htmlspecialchars($m['isbn']); ?></td>
-            <td><?php echo htmlspecialchars($m['title']); ?></td>
-            <td><?php echo htmlspecialchars($m['author']); ?></td>
-            <td><?php echo htmlspecialchars($m['media_type']); ?></td>
-            <td><?php echo htmlspecialchars($m['category_id']); ?></td>
-            <td><?php echo htmlspecialchars($m['description']); ?></td>
-            <td><?php echo htmlspecialchars($m['price']); ?></td>
-            <td>
-                <button type="button" class="edit" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="delete_media" value="<?php echo $m['id']; ?>">
-                    <button class="delete" type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        <tr id="edit-form-media-<?php echo $m['id']; ?>" class="hidden">
-            <td colspan="8">
-                <form method="POST" class="edit-form">
-                    <input type="hidden" name="edit_media" value="<?php echo $m['id']; ?>">
-                    <label>ISBN:</label>
-                    <input type="text" name="isbn" value="<?php echo htmlspecialchars($m['isbn']); ?>" required>
-                    <label>Title:</label>
-                    <input type="text" name="title" value="<?php echo htmlspecialchars($m['title']); ?>" required>
-                    <label>Author:</label>
-                    <input type="text" name="author" value="<?php echo htmlspecialchars($m['author']); ?>" required>
-                    <label>Media Type:</label>
-                    <select name="media_type">
-                        <option value="bok" <?php if($m['media_type']=='bok') echo 'selected'; ?>>Book</option>
-                        <option value="ljudbok" <?php if($m['media_type']=='ljudbok') echo 'selected'; ?>>Audiobook</option>
-                        <option value="film" <?php if($m['media_type']=='film') echo 'selected'; ?>>Film</option>
-                    </select>
-                    <label>Category:</label>
-                    <select name="category_id">
-                        <?php foreach ($categories as $c): ?>
-                            <option value="<?php echo $c['id']; ?>" <?php if($c['id']==$m['category_id']) echo 'selected'; ?>>
-                                <?php echo htmlspecialchars($c['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <label>Description:</label>
-                    <textarea name="description"><?php echo htmlspecialchars($m['description']); ?></textarea>
-                    <label>Price:</label>
-                    <input type="number" step="0.01" name="price" value="<?php echo htmlspecialchars($m['price']); ?>">
-                    <button type="submit">Save Changes</button>
-                </form>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-</div>
+    <!-- MEDIA TAB -->
+    <div id="media" class="tab hidden">
+        <h2>Media</h2>
 
-<!-- COPIES TAB -->
-<div id="copies" class="tab hidden">
-    <h2>Copies</h2>
+        <!-- Add Media Form -->
+        <form method="POST" class="add-form">
+            <h3>Add New Media</h3>
+            <input type="text" name="isbn" placeholder="ISBN" required>
+            <input type="text" name="title" placeholder="Title" required>
+            <input type="text" name="author" placeholder="Author" required>
+            <select name="media_type">
+                <option value="bok">Book</option>
+                <option value="ljudbok">Audiobook</option>
+                <option value="film">Film</option>
+            </select>
+            <select name="category_id" required>
+                <option value="">-- Select Category --</option>
+                <?php foreach ($categories as $c): ?>
+                    <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <textarea name="description" placeholder="Description"></textarea>
+            <input type="number" step="0.01" name="price" placeholder="Price (kr)">
+            <button type="submit" name="add_media">Add Media</button>
+        </form>
 
-    <!-- Add Copy Form -->
-    <form method="POST" class="add-form">
-        <h3>Add Copy</h3>
-        <select name="media_id" required>
-            <option value="">-- Select Media --</option>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>ISBN</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Media Type</th>
+                <th>Category ID</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
             <?php foreach ($media as $m): ?>
-                <option value="<?php echo $m['id']; ?>"><?php echo htmlspecialchars($m['title']); ?></option>
+            <tr>
+                <td><?php echo $m['id']; ?></td>
+                <td><?php echo htmlspecialchars($m['isbn']); ?></td>
+                <td><?php echo htmlspecialchars($m['title']); ?></td>
+                <td><?php echo htmlspecialchars($m['author']); ?></td>
+                <td><?php echo htmlspecialchars($m['media_type']); ?></td>
+                <td><?php echo htmlspecialchars($m['category_id']); ?></td>
+                <td><?php echo htmlspecialchars($m['description']); ?></td>
+                <td><?php echo htmlspecialchars($m['price']); ?></td>
+                <td>
+                    <button type="button" class="edit" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="delete_media" value="<?php echo $m['id']; ?>">
+                        <button class="delete" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            <tr id="edit-form-media-<?php echo $m['id']; ?>" class="hidden">
+                <td colspan="8">
+                    <form method="POST" class="edit-form">
+                        <input type="hidden" name="edit_media" value="<?php echo $m['id']; ?>">
+                        <label>ISBN:</label>
+                        <input type="text" name="isbn" value="<?php echo htmlspecialchars($m['isbn']); ?>" required>
+                        <label>Title:</label>
+                        <input type="text" name="title" value="<?php echo htmlspecialchars($m['title']); ?>" required>
+                        <label>Author:</label>
+                        <input type="text" name="author" value="<?php echo htmlspecialchars($m['author']); ?>" required>
+                        <label>Media Type:</label>
+                        <select name="media_type">
+                            <option value="bok" <?php if($m['media_type']=='bok') echo 'selected'; ?>>Book</option>
+                            <option value="ljudbok" <?php if($m['media_type']=='ljudbok') echo 'selected'; ?>>Audiobook</option>
+                            <option value="film" <?php if($m['media_type']=='film') echo 'selected'; ?>>Film</option>
+                        </select>
+                        <label>Category:</label>
+                        <select name="category_id">
+                            <?php foreach ($categories as $c): ?>
+                                <option value="<?php echo $c['id']; ?>" <?php if($c['id']==$m['category_id']) echo 'selected'; ?>>
+                                    <?php echo htmlspecialchars($c['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <label>Description:</label>
+                        <textarea name="description"><?php echo htmlspecialchars($m['description']); ?></textarea>
+                        <label>Price:</label>
+                        <input type="number" step="0.01" name="price" value="<?php echo htmlspecialchars($m['price']); ?>">
+                        <button type="submit">Save Changes</button>
+                    </form>
+                </td>
+            </tr>
             <?php endforeach; ?>
-        </select>
-        <input type="text" name="barcode" placeholder="Barcode" required>
-        <button type="submit" name="add_copy">Add Copy</button>
-    </form>
+        </table>
+    </div>
 
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Media ID</th>
-            <th>Barcode</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-        <?php
-        $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($copies as $cp): ?>
-        <tr>
-            <td><?php echo $cp['id']; ?></td>
-            <td><?php echo htmlspecialchars($cp['media_id']); ?></td>
-            <td><?php echo htmlspecialchars($cp['barcode']); ?></td>
-            <td><?php echo htmlspecialchars($cp['status']); ?></td>
-            <td>
-                <button type="button" class="edit" onclick="toggleEditForm(<?php echo $cp['id']; ?>, 'copy')">Edit</button>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="delete_copy" value="<?php echo $cp['id']; ?>">
-                    <button class="delete" type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        <tr id="edit-form-copy-<?php echo $cp['id']; ?>" class="hidden">
-            <td colspan="5">
-                <form method="POST" class="edit-form">
-                    <input type="hidden" name="edit_copy" value="<?php echo $cp['id']; ?>">
-                    <label>Barcode:</label>
-                    <input type="text" name="barcode" value="<?php echo htmlspecialchars($cp['barcode']); ?>" required>
-                    <label>Status:</label>
-                    <select name="status">
-                        <option value="available" <?php if($cp['status']=='available') echo 'selected'; ?>>Available</option>
-                        <option value="on_loan" <?php if($cp['status']=='on_loan') echo 'selected'; ?>>On Loan</option>
-                        <option value="lost" <?php if($cp['status']=='lost') echo 'selected'; ?>>Lost</option>
-                        <option value="written_off" <?php if($cp['status']=='written_off') echo 'selected'; ?>>Written Off</option>
-                    </select>
-                    <button type="submit">Save Changes</button>
-                </form>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-</div>
+    <!-- COPIES TAB -->
+    <div id="copies" class="tab hidden">
+        <h2>Copies</h2>
+
+        <!-- Add Copy Form -->
+        <form method="POST" class="add-form">
+            <h3>Add Copy</h3>
+            <select name="media_id" required>
+                <option value="">-- Select Media --</option>
+                <?php foreach ($media as $m): ?>
+                    <option value="<?php echo $m['id']; ?>"><?php echo htmlspecialchars($m['title']); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <input type="text" name="barcode" placeholder="Barcode" required>
+            <button type="submit" name="add_copy">Add Copy</button>
+        </form>
+
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Media ID</th>
+                <th>Barcode</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            <?php
+            $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($copies as $cp): ?>
+            <tr>
+                <td><?php echo $cp['id']; ?></td>
+                <td><?php echo htmlspecialchars($cp['media_id']); ?></td>
+                <td><?php echo htmlspecialchars($cp['barcode']); ?></td>
+                <td><?php echo htmlspecialchars($cp['status']); ?></td>
+                <td>
+                    <button type="button" class="edit" onclick="toggleEditForm(<?php echo $cp['id']; ?>, 'copy')">Edit</button>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="delete_copy" value="<?php echo $cp['id']; ?>">
+                        <button class="delete" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            <tr id="edit-form-copy-<?php echo $cp['id']; ?>" class="hidden">
+                <td colspan="5">
+                    <form method="POST" class="edit-form">
+                        <input type="hidden" name="edit_copy" value="<?php echo $cp['id']; ?>">
+                        <label>Barcode:</label>
+                        <input type="text" name="barcode" value="<?php echo htmlspecialchars($cp['barcode']); ?>" required>
+                        <label>Status:</label>
+                        <select name="status">
+                            <option value="available" <?php if($cp['status']=='available') echo 'selected'; ?>>Available</option>
+                            <option value="on_loan" <?php if($cp['status']=='on_loan') echo 'selected'; ?>>On Loan</option>
+                            <option value="lost" <?php if($cp['status']=='lost') echo 'selected'; ?>>Lost</option>
+                            <option value="written_off" <?php if($cp['status']=='written_off') echo 'selected'; ?>>Written Off</option>
+                        </select>
+                        <button type="submit">Save Changes</button>
+                    </form>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
 
 
-<!-- LOANS TAB -->
-<div id="loans" class="tab hidden">
-    <h2>Loans</h2>
-    <table>
-        <tr><th>ID</th><th>User</th><th>Media</th><th>Barcode</th><th>Loan Date</th><th>Due Date</th><th>Return Date</th><th>Status</th><th>Action</th></tr>
-        <?php foreach ($loans as $l): ?>
-        <tr>
-            <td><?php echo $l['id']; ?></td>
-            <td><?php echo htmlspecialchars($l['username']); ?></td>
-            <td><?php echo htmlspecialchars($l['title']); ?></td>
-            <td><?php echo htmlspecialchars($l['barcode']); ?></td>
-            <td><?php echo $l['loan_date']; ?></td>
-            <td><?php echo $l['due_date']; ?></td>
-            <td><?php echo $l['return_date'] ?? '—'; ?></td>
-            <td><?php echo $l['status']; ?></td>
-            <td>
-                <form method="POST">
-                    <input type="hidden" name="delete_loan" value="<?php echo $l['id']; ?>">
-                    <button class="delete" type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-</div>
-
-<script>
-// Default tab
-showTab('users');
-</script>
+    <!-- LOANS TAB -->
+    <div id="loans" class="tab hidden">
+        <h2>Loans</h2>
+        <table>
+            <tr><th>ID</th><th>User</th><th>Media</th><th>Barcode</th><th>Loan Date</th><th>Due Date</th><th>Return Date</th><th>Status</th><th>Action</th></tr>
+            <?php foreach ($loans as $l): ?>
+            <tr>
+                <td><?php echo $l['id']; ?></td>
+                <td><?php echo htmlspecialchars($l['username']); ?></td>
+                <td><?php echo htmlspecialchars($l['title']); ?></td>
+                <td><?php echo htmlspecialchars($l['barcode']); ?></td>
+                <td><?php echo $l['loan_date']; ?></td>
+                <td><?php echo $l['due_date']; ?></td>
+                <td><?php echo $l['return_date'] ?? '—'; ?></td>
+                <td><?php echo $l['status']; ?></td>
+                <td>
+                    <form method="POST">
+                        <input type="hidden" name="delete_loan" value="<?php echo $l['id']; ?>">
+                        <button class="delete" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
 </body>
 </html>
