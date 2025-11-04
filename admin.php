@@ -145,6 +145,7 @@ $loans = $pdo->query("
     <meta charset="UTF-8">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/style.css">
     <script src="js/admin.js" defer></script>
 </head>
 <body>
@@ -152,10 +153,10 @@ $loans = $pdo->query("
 
     <nav>
         <button id="users-btn" class="active" onclick="showTab('users')">Users</button>
-        <button id="media-btn" onclick="showTab('media')">Media</button>
-        <button id="copies-btn" onclick="showTab('copies')">Copies</button>
-        <button id="loans-btn" onclick="showTab('loans')">Loans</button>
-        <a href="user_dashboard.php" class="back">← Back to User view</a>
+        <button id="media-btn" class="nav-button" onclick="showTab('media')">Media</button>
+        <button id="copies-btn" class="nav-button" onclick="showTab('copies')">Copies</button>
+        <button id="loans-btn" class="nav-button" onclick="showTab('loans')">Loans</button>
+        <a href="user_dashboard.php" class="back action-button">← Back to User view</a>
     </nav>
 
     <?php if ($message): ?>
@@ -175,11 +176,11 @@ $loans = $pdo->query("
                 <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
                 <td><?php echo $u['created_at']; ?></td>
                 <td>
-                    <button type="button" class="edit" onclick="toggleEditForm(<?php echo $u['id']; ?>, 'user')">Edit</button>
+                    <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $u['id']; ?>, 'user')">Edit</button>
                     <?php if ($u['id'] != $userId): ?>
                     <form method="POST" style="display:inline;">
                         <input type="hidden" name="delete_user" value="<?php echo $u['id']; ?>">
-                        <button class="delete" type="submit">Delete</button>
+                        <button class="delete action-button" type="submit">Delete</button>
                     </form>
                     <?php else: ?>—<?php endif; ?>
                 </td>
@@ -257,10 +258,10 @@ $loans = $pdo->query("
                 <td><?php echo htmlspecialchars($m['description']); ?></td>
                 <td><?php echo htmlspecialchars($m['price']); ?></td>
                 <td>
-                    <button type="button" class="edit" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
+                    <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
                     <form method="POST" style="display:inline;">
-                        <input type="hidden" name="delete_media" value="<?php echo $m['id']; ?>">
-                        <button class="delete" type="submit">Delete</button>
+                        <input type="hidden"  name="delete_media" value="<?php echo $m['id']; ?>">
+                        <button class="delete action-button" type="submit">Delete</button>
                     </form>
                 </td>
             </tr>
@@ -334,10 +335,10 @@ $loans = $pdo->query("
                 <td><?php echo htmlspecialchars($cp['barcode']); ?></td>
                 <td><?php echo htmlspecialchars($cp['status']); ?></td>
                 <td>
-                    <button type="button" class="edit" onclick="toggleEditForm(<?php echo $cp['id']; ?>, 'copy')">Edit</button>
+                    <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $cp['id']; ?>, 'copy')">Edit</button>
                     <form method="POST" style="display:inline;">
                         <input type="hidden" name="delete_copy" value="<?php echo $cp['id']; ?>">
-                        <button class="delete" type="submit">Delete</button>
+                        <button class="delete action-button" type="submit">Delete</button>
                     </form>
                 </td>
             </tr>
@@ -381,7 +382,7 @@ $loans = $pdo->query("
                 <td>
                     <form method="POST">
                         <input type="hidden" name="delete_loan" value="<?php echo $l['id']; ?>">
-                        <button class="delete" type="submit">Delete</button>
+                        <button class="delete action-button" type="submit">Delete</button>
                     </form>
                 </td>
             </tr>

@@ -1,6 +1,4 @@
 body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
     padding: 20px;
 }
 h1 { color: #333; }
@@ -13,7 +11,7 @@ h1 { color: #333; }
 }
 nav { margin-bottom: 20px; }
 nav button {
-    background-color: #007BFF;
+    background-color: var(--button-color);
     color: white;
     border: none;
     padding: 8px 14px;
@@ -21,23 +19,32 @@ nav button {
     border-radius: 5px;
     cursor: pointer;
 }
-nav button.active { background-color: #0056b3; }
+nav button.active { 
+    background-color: var(--button-selected-color); 
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
 }
+
 th, td {
     border: 1px solid #ddd;
     padding: 8px;
 }
+
 th {
-    background: #007BFF;
+    background: var(--button-color);
     color: white;
 }
-tr:nth-child(even) { background: #f9f9f9; }
+
+tr:nth-child(even) {
+    background: var(--table-row-bg-color); 
+}
+
 button.delete {
-    background: grey;
+    background: var(--action-button-color);
     color: white;
     border: none;
     padding: 5px 10px;
@@ -45,7 +52,7 @@ button.delete {
     cursor: pointer;
 }
 button.edit {
-    background: grey;
+    background: var(--action-button-color);
     color: white;
     border: none;
     padding: 5px 10px;
