@@ -167,11 +167,11 @@ $loans = $pdo->query("
     <div id="users" class="tab">
         <h2>Users</h2>
         <table>
-            <tr><th>ID</th><th>Username</th><th>Password</th><th>Admin</th><th>Created</th><th>Actions</th></tr>
+            <tr><th>Username</th><th>Admin</th><th>Created</th><th>Active loans</th><th>Late loan</th><th>Total Loans</th><th></th><th>Actions</th></tr>
             <?php foreach ($users as $u): ?>
             <tr>
-                <td><?php echo $u['id']; ?></td>
-                <td><?php echo htmlspecialchars($u['username']); ?></td>
+                
+                
                 <td><?php echo htmlspecialchars($u['password_']); ?></td>
                 <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
                 <td><?php echo $u['created_at']; ?></td>
@@ -237,7 +237,6 @@ $loans = $pdo->query("
 
         <table>
             <tr>
-                <th>ID</th>
                 <th>ISBN</th>
                 <th>Title</th>
                 <th>Author</th>
@@ -249,7 +248,6 @@ $loans = $pdo->query("
             </tr>
             <?php foreach ($media as $m): ?>
             <tr>
-                <td><?php echo $m['id']; ?></td>
                 <td><?php echo htmlspecialchars($m['isbn']); ?></td>
                 <td><?php echo htmlspecialchars($m['title']); ?></td>
                 <td><?php echo htmlspecialchars($m['author']); ?></td>
@@ -320,7 +318,6 @@ $loans = $pdo->query("
 
         <table>
             <tr>
-                <th>ID</th>
                 <th>Media ID</th>
                 <th>Barcode</th>
                 <th>Status</th>
@@ -330,7 +327,6 @@ $loans = $pdo->query("
             $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($copies as $cp): ?>
             <tr>
-                <td><?php echo $cp['id']; ?></td>
                 <td><?php echo htmlspecialchars($cp['media_id']); ?></td>
                 <td><?php echo htmlspecialchars($cp['barcode']); ?></td>
                 <td><?php echo htmlspecialchars($cp['status']); ?></td>
