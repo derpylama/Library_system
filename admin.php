@@ -167,7 +167,7 @@ $loans = $pdo->query("
     <div id="users" class="tab">
         <h2>Users</h2>
         <table>
-            <tr><th>Username</th><th>Admin</th><th>Created</th><th>Active loans</th><th>Late loan</th><th>Total Loans</th><th></th><th>Actions</th></tr>
+            <tr><th>Username</th><th>Admin</th><th>Created</th><th>Active loans</th><th>Late loan</th><th>Total Loans</th><th>Total debt</th><th>Actions</th></tr>
             <?php foreach ($users as $u): ?>
             <tr>
                 
