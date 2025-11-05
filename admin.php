@@ -27,6 +27,11 @@ $message = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $isbn = trim($_POST['isbn']);
     $isan = trim($_POST['isan']);
+
+    // Remove any hyphens from ISBN and ISAN
+    $isbn = str_replace('-', '', $isbn);
+    $isan = str_replace('-', '', $isan);
+
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
@@ -116,8 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
 // Edit media
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
     $id = (int)$_POST['edit_media'];
+    
     $isbn = trim($_POST['isbn']);
     $isan = trim($_POST['isan']);
+
+    // Remove any hyphens from ISBN and ISAN
+    $isbn = str_replace('-', '', $isbn);
+    $isan = str_replace('-', '', $isan);
+
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
