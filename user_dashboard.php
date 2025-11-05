@@ -85,9 +85,10 @@ ORDER BY m.title;
 ";
 $mediaList = $pdo->query($mediaQuery)->fetchAll(PDO::FETCH_ASSOC);
 
-// TEST SEARCH FUNCTIONALITY
+$searchResults = [];
 if (isset($_GET["q"]) && !empty(trim($_GET["q"]))) {
     $searchTerm = trim($_GET["q"]);
+    // Returns [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
     $searchResults = SearchMedia($mediaList, $searchTerm);
     echo "
     <script>
@@ -144,40 +145,90 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="message"><?php echo htmlspecialchars($message); ?></div>
     <?php endif; ?>
 
+    <!-- search bar -->
+    <div class="search-bar">
+        <form method="GET" action="user_dashboard.php">
+            <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
     <!-- All Media View -->
     <div id="media-view" class="grid">
-    <?php foreach ($mediaList as $media): ?>
-        <div class="card" <?= cardSize($media['image_url']) ?>>
-            <div class="media-title-container">
-                <h3><?php echo htmlspecialchars($media['title']); ?></h3>
-            </div>
-            <div class="media-image-container">
-            <?= imageType($media['image_url']); ?>
-            </div>
-            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
-            <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
-            <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
-            <p>
-                <?php
-                if ($media['media_type'] !== 'film') {
-                    echo "<strong>ISBN: </strong>" . htmlspecialchars($media['isbn'] ?? 'N/A') . "<br>";
-                } else {
-                    echo "<strong>ISAN: </strong>" . htmlspecialchars($media['isan'] ?? 'N/A') . "<br>";
+
+        <?php
+        foreach ($mediaList as $media) {
+
+            // Iterate each field, does it exists as a match in a search result? If so highlight the matching part
+            //   also keep track if this media had any matches at all in search results if not and search result is not empty skip it
+            // $searchResults = [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
+            if (count($searchResults) > 0) {
+                $foundInSearch = false;
+
+                foreach ($media as $field => $value) {
+                    $foundField = false;
+                    
+                    // Find if this media has matches in search results
+                    foreach ($searchResults as $result) {
+                        if ($result['mediaId'] == $media['id']) {
+                            // Check matches for this field
+                            foreach ($result['matches'] as $match) {
+                                if ($match['field'] === $field) {
+                                    // Highlight match in value
+                                    $start = $match['index'];
+                                    $length = $match['length'];
+                                    $before = htmlspecialchars(mb_substr($value, 0, $start));
+                                    $matchText = htmlspecialchars(mb_substr($value, $start, $length));
+                                    $after = htmlspecialchars(mb_substr($value, $start + $length));
+                                    $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
+                                    $media[$field] = $value;
+                                    $foundField = true;
+                                    $foundInSearch = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // If not htmlspecialchars the value
+                    if (!$foundField) {
+                        $media[$field] = htmlspecialchars($value);
+                    }
+
                 }
-                ?>
-                <strong>SAB:</strong> <?php echo $media['sab_code'] ?? 0; ?><br>
-                <strong>Total:</strong> <?php echo $media['total_copies'] ?? 0; ?><br>
-                <strong>Available:</strong> <?php echo $media['available_copies'] ?? 0; ?><br>
-                <strong>Loaned:</strong> <?php echo $media['loaned_copies'] ?? 0; ?>
-            </p>
-            <form method="POST">
-                <input type="hidden" name="media_id" value="<?php echo $media['id']; ?>">
-                <button type="submit" <?php echo ($media['available_copies'] == 0) ? 'disabled' : ''; ?>>
-                    <?php echo ($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media'; ?>
-                </button>
-            </form>
-        </div>
-    <?php endforeach; ?>
+
+                if (!$foundInSearch) {
+                    continue; // Skip this media, no matches found
+                }
+            }
+
+            echo '
+            <div class="card" '.cardSize($media['image_url']).'>
+                <h3>' . $media['title'] . '</h3>
+                '.imageType($media['image_url']);.'
+                <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
+                <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
+                <p>' . nl2br($media['description']) . '</p>
+                <p>
+                ' . (
+                    $media['media_type'] !== 'film'
+                    ? "<strong>ISBN: </strong>" . ($media['isbn'] ?? 'N/A') . "<br>"
+                    : "<strong>ISAN: </strong>" . ($media['isan'] ?? 'N/A') . "<br>"
+                ) . '
+                    <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
+                    <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
+                    <strong>Available:</strong> ' . ($media['available_copies'] ?? 0) . '<br>
+                    <strong>Loaned:</strong> ' . ($media['loaned_copies'] ?? 0) . '
+                </p>
+                <form method="POST">
+                    <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                    <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                        ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                    </button>
+                </form>
+            </div>
+            ';
+        }
+        ?>
     </div>
 
     <!-- My Loans View -->

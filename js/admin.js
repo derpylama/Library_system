@@ -1,4 +1,5 @@
 function showTab(tabName) {
+    sessionStorage.setItem('currentTab', tabName);
     document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
     document.getElementById(tabName).classList.remove('hidden');
     document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
@@ -21,6 +22,8 @@ function toggleEditForm(id, type = 'media') {
 
 // Default tab on load
 document.addEventListener('DOMContentLoaded', () => {
+    const savedTab = sessionStorage.getItem('currentTab') || 'users';
+    showTab(savedTab);
     // On change for add-media-sab-preset to when selected option has value 'custom', remove hidden class from add-media-sab-custom, else add hidden class to add-media-sab-custom
     const sabCodePreset = document.getElementById('add-media-sab-preset');
     const sabCodeCustom = document.getElementById('add-media-sab-custom');
@@ -48,6 +51,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Show tab
-    showTab('users')
 });

@@ -68,3 +68,19 @@ body {
 .hidden {
     display: none;
 }
+
+.search-highlight {
+    background-color: yellow;
+}
+
+input[name="q"] {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    outline: none;
+}
+
+input[name="q"]:focus, input[name="q"]:active {
+    outline: none;
+    border: 1px solid #ccc;
+}
