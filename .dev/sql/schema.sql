@@ -11,7 +11,7 @@ CREATE TABLE category (
 CREATE TABLE user (
     id INT(11) AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
-    password_ VARCHAR(255) NOT NULL,
+    passwordhash CHAR(64) NOT NULL,
     is_admin TINYINT(1) DEFAULT 0,
     created_at DATETIME DEFAULT current_timestamp()
 );
