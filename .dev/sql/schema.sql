@@ -1,9 +1,12 @@
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS category, copy, invoice, loan, media, user;
+-- Current
+DROP TABLE IF EXISTS copy, invoice, loan, media, user, sab_category;
+
+-- Deprecated
+DROP TABLE IF EXISTS category;
 SET FOREIGN_KEY_CHECKS = 1;
 
-CREATE TABLE category (
-    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE sab_category (
     sab_code VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL
 );
@@ -11,7 +14,7 @@ CREATE TABLE category (
 CREATE TABLE user (
     id INT(11) AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
-    password_ VARCHAR(255) NOT NULL,
+    passwordhash CHAR(64) NOT NULL,
     is_admin TINYINT(1) DEFAULT 0,
     created_at DATETIME DEFAULT current_timestamp()
 );
@@ -19,18 +22,16 @@ CREATE TABLE user (
 CREATE TABLE media (
     id INT(11) AUTO_INCREMENT PRIMARY KEY,
     isbn VARCHAR(20) DEFAULT NULL,
-    isan VARCHAR(20) DEFAULT NULL,
+    isan VARCHAR(30) DEFAULT NULL,
     barcode VARCHAR(100) NOT NULL,
     title VARCHAR(512) NOT NULL,
     author VARCHAR(255) DEFAULT NULL,
     media_type ENUM('bok', 'ljudbok', 'film') NOT NULL,
-    category_id INT(11) DEFAULT NULL,
+    sab_code VARCHAR(150) DEFAULT NULL,
     description TEXT DEFAULT NULL,
     price DECIMAL(10,2) DEFAULT 0.00,
     created_at DATETIME DEFAULT current_timestamp(),
-    updated_at DATETIME DEFAULT current_timestamp(),
-
-    FOREIGN KEY (category_id) REFERENCES category(id)
+    updated_at DATETIME DEFAULT current_timestamp()
 );
 
 CREATE TABLE copy (

@@ -64,3 +64,7 @@ body {
 .logout-button:disabled {
     background-color: var(--button-disabled-color);
 }
+
+.hidden {
+    display: none;
+}

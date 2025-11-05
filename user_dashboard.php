@@ -1,5 +1,6 @@
 <?php
 require_once('php/db.php');
+require_once('php/search.php');
 
 session_start();
 
@@ -72,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_loan_id'])) {
 // Fetch all media
 $mediaQuery = "
 SELECT 
-  m.id, m.title, m.author, m.media_type, m.description,
+  m.*,
   COUNT(c.id) AS total_copies,
   SUM(CASE WHEN c.status = 'available' THEN 1 ELSE 0 END) AS available_copies,
   SUM(CASE WHEN c.status = 'on_loan' THEN 1 ELSE 0 END) AS loaned_copies
@@ -82,6 +83,19 @@ GROUP BY m.id
 ORDER BY m.title;
 ";
 $mediaList = $pdo->query($mediaQuery)->fetchAll(PDO::FETCH_ASSOC);
+
+// TEST SEARCH FUNCTIONALITY
+if (isset($_GET["q"]) && !empty(trim($_GET["q"]))) {
+    $searchTerm = trim($_GET["q"]);
+    $searchResults = SearchMedia($mediaList, $searchTerm);
+    echo "
+    <script>
+    console.log('Search Term: " . $searchTerm . "');
+    console.log('Search Results: ', JSON.parse('" . json_encode($searchResults) . "'));
+    </script>
+    ";
+}
+
 
 // Fetch user's active and past loans
 $loanQuery = "
@@ -138,6 +152,14 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
             <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
             <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
             <p>
+                <?php
+                if ($media['media_type'] !== 'film') {
+                    echo "<strong>ISBN: </strong>" . htmlspecialchars($media['isbn'] ?? 'N/A') . "<br>";
+                } else {
+                    echo "<strong>ISAN: </strong>" . htmlspecialchars($media['isan'] ?? 'N/A') . "<br>";
+                }
+                ?>
+                <strong>SAB:</strong> <?php echo $media['sab_code'] ?? 0; ?><br>
                 <strong>Total:</strong> <?php echo $media['total_copies'] ?? 0; ?><br>
                 <strong>Available:</strong> <?php echo $media['available_copies'] ?? 0; ?><br>
                 <strong>Loaned:</strong> <?php echo $media['loaned_copies'] ?? 0; ?>

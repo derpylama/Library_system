@@ -26,10 +26,15 @@ $message = "";
 // Add new media
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $isbn = trim($_POST['isbn']);
+    $isan = trim($_POST['isan']);
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
-    $category = (int)$_POST['category_id'];
+
+    $sabcode_preset = (int)$_POST['sab_code_preset'];
+    $sabcode_custom = trim($_POST['sab_code_custom']);
+    $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
+
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
@@ -38,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $barcode = generateBarcode($title, $allBarcodes);
 
 
-    $stmt = $pdo->prepare("INSERT INTO media (isbn, barcode, title, author, media_type, category_id, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$isbn, $barcode, $title, $author, $type, $category, $desc, $price]);
+    $stmt = $pdo->prepare("INSERT INTO media (isbn, isan, barcode, title, author, media_type, sab_code, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$isbn, $isan, $barcode, $title, $author, $type, $sabcode, $desc, $price]);
     $message = "Media added successfully.";
 }
 
@@ -91,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $newPassword = trim($_POST['new_password']);
 
     if ($newPassword !== "") {
-        $stmt = $pdo->prepare("UPDATE user SET username=?, password_=?, is_admin=? WHERE id=?");
+        $stmt = $pdo->prepare("UPDATE user SET username=?, passwordhash=?, is_admin=? WHERE id=?");
         $stmt->execute([$username, $newPassword, $isAdmin, $id]);
     } else {
         $stmt = $pdo->prepare("UPDATE user SET username=?, is_admin=? WHERE id=?");
@@ -112,15 +117,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
     $id = (int)$_POST['edit_media'];
     $isbn = trim($_POST['isbn']);
+    $isan = trim($_POST['isan']);
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
-    $category = (int)$_POST['category_id'];
+
+    $sabcode_preset = $_POST['sab_code_preset'];
+    $sabcode_custom = trim($_POST['sab_code_custom']);
+    $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
+
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
-    $stmt = $pdo->prepare("UPDATE media SET isbn=?, title=?, author=?, media_type=?, category_id=?, description=?, price=?, updated_at=NOW() WHERE id=?");
-    $stmt->execute([$isbn, $title, $author, $type, $category, $desc, $price, $id]);
+    $stmt = $pdo->prepare("UPDATE media SET isbn=?, isan=?, title=?, author=?, media_type=?, sab_code=?, description=?, price=?, updated_at=NOW() WHERE id=?");
+    $stmt->execute([$isbn, $isan, $title, $author, $type, $sabcode, $desc, $price, $id]);
     $message = "Media ID $id updated.";
 }
 
@@ -149,12 +159,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan'])) {
 }
 
 // --- FETCH DATA ---
-$categories = $pdo->query("SELECT id, name FROM category ORDER BY name")->fetchAll();
-$users = $pdo->query("SELECT id, username, password_, is_admin, created_at FROM user ORDER BY id")->fetchAll();
+$sabcategories = $pdo->query("SELECT sab_code, name FROM sab_category ORDER BY name")->fetchAll();
+$users = $pdo->query("SELECT id, username, is_admin, created_at FROM user ORDER BY id")->fetchAll();
 $media = $pdo->query("
-    SELECT m.id, m.isbn, m.title, m.author, m.media_type, c.name AS category, m.category_id, m.description, m.price, COUNT(cp.id) AS copies
+    SELECT m.id, m.isbn, m.isan, m.title, m.author, m.media_type, m.sab_code, m.description, m.price, COUNT(cp.id) AS copies
     FROM media m
-    LEFT JOIN category c ON m.category_id = c.id
     LEFT JOIN copy cp ON cp.media_id = m.id
     GROUP BY m.id
     ORDER BY m.title
@@ -167,6 +176,7 @@ $loans = $pdo->query("
     JOIN media m ON c.media_id = m.id
     ORDER BY l.loan_date DESC
 ")->fetchAll();
+
 ?>
 
 <!DOCTYPE html>
@@ -197,14 +207,44 @@ $loans = $pdo->query("
     <div id="users" class="tab">
         <h2>Users</h2>
         <table>
-            <tr><th>ID</th><th>Username</th><th>Password</th><th>Admin</th><th>Created</th><th>Actions</th></tr>
-            <?php foreach ($users as $u): ?>
+            <tr><th>Username</th><th>Admin</th><th>Created</th><th>Active loans</th><th>Late loan</th><th>Total Loans</th><th>Total debt</th><th>Actions</th></tr>
+            <?php foreach ($users as $u):?>
             <tr>
-                <td><?php echo $u['id']; ?></td>
+                
+                
                 <td><?php echo htmlspecialchars($u['username']); ?></td>
-                <td><?php echo htmlspecialchars($u['password_']); ?></td>
                 <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
                 <td><?php echo $u['created_at']; ?></td>
+                <td>
+                    <?php
+                    $activeLoansStmt = $pdo->prepare("SELECT COUNT(*) FROM loan WHERE user_id = ? AND return_date IS NULL");
+                    $activeLoansStmt->execute([$u['id']]);
+                    echo $activeLoansStmt->fetchColumn();
+                    ?>
+                </td>
+                <td>
+                    <?php
+                    $lateLoanStmt = $pdo->prepare("SELECT COUNT(*) FROM loan WHERE user_id = ? AND return_date IS NULL AND due_date < CURDATE()");
+                    $lateLoanStmt->execute([$u['id']]);
+                    echo $lateLoanStmt->fetchColumn();
+                    ?>
+                </td>
+                <td>
+                    <?php
+                    $totalLoansStmt = $pdo->prepare("SELECT COUNT(*) FROM loan WHERE user_id = ?");
+                    $totalLoansStmt->execute([$u['id']]);
+                    echo $totalLoansStmt->fetchColumn();
+                    ?>
+                </td>
+                <td>
+                    <?php
+                    $debtStmt = $pdo->prepare("SELECT SUM(amount) FROM invoice WHERE user_id = ?");
+                    $debtStmt->execute([$u['id']]);
+                    $debt = $debtStmt->fetchColumn();
+                    echo $debt ? number_format($debt, 2) . " kr" : "0 kr";
+                    ?>
+                </td>
+                
                 <td>
                     <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $u['id']; ?>, 'user')">Edit</button>
                     <?php if ($u['id'] != $userId): ?>
@@ -246,7 +286,8 @@ $loans = $pdo->query("
         <!-- Add Media Form -->
         <form method="POST" class="add-form">
             <h3>Add New Media</h3>
-            <input type="text" name="isbn" placeholder="ISBN" required>
+            <input type="text" name="isbn" placeholder="ISBN">
+            <input type="text" name="isan" placeholder="ISAN">
             <input type="text" name="title" placeholder="Title" required>
             <input type="text" name="author" placeholder="Author" required>
             <select name="media_type">
@@ -254,12 +295,16 @@ $loans = $pdo->query("
                 <option value="ljudbok">Audiobook</option>
                 <option value="film">Film</option>
             </select>
-            <select name="category_id" required>
-                <option value="">-- Select Category --</option>
-                <?php foreach ($categories as $c): ?>
-                    <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option>
+            <!-- We shold have the preset dropdown or CUSTOM which allows entering string, SAB is always string -->
+            <select id="add-media-sab-preset" name="sab_code_preset" required>
+                <option value="">-- Select SAB Category --</option>
+                <?php foreach ($sabcategories as $c): ?>
+                    <option value="<?php echo $c['sab_code']; ?>"><?php echo htmlspecialchars($c['name']); ?></option>
                 <?php endforeach; ?>
+                <option value="custom">Custom</option>
             </select>
+            <input id="add-media-sab-custom"  type="text" name="sab_code_custom" placeholder="Custom SAB Code" class="hidden">
+            
             <textarea name="description" placeholder="Description"></textarea>
             <input type="number" step="0.01" name="price" placeholder="Price (kr)">
             <button type="submit" name="add_media">Add Media</button>
@@ -267,24 +312,24 @@ $loans = $pdo->query("
 
         <table>
             <tr>
-                <th>ID</th>
                 <th>ISBN</th>
+                <th>ISAN</th>
                 <th>Title</th>
                 <th>Author</th>
                 <th>Media Type</th>
-                <th>Category ID</th>
+                <th>SAB</th>
                 <th>Description</th>
                 <th>Price</th>
                 <th>Actions</th>
             </tr>
             <?php foreach ($media as $m): ?>
             <tr>
-                <td><?php echo $m['id']; ?></td>
                 <td><?php echo htmlspecialchars($m['isbn']); ?></td>
+                <td><?php echo htmlspecialchars($m['isan']); ?></td>
                 <td><?php echo htmlspecialchars($m['title']); ?></td>
                 <td><?php echo htmlspecialchars($m['author']); ?></td>
                 <td><?php echo htmlspecialchars($m['media_type']); ?></td>
-                <td><?php echo htmlspecialchars($m['category_id']); ?></td>
+                <td><?php echo htmlspecialchars($m['sab_code']); ?></td>
                 <td><?php echo htmlspecialchars($m['description']); ?></td>
                 <td><?php echo htmlspecialchars($m['price']); ?></td>
                 <td>
@@ -300,7 +345,9 @@ $loans = $pdo->query("
                     <form method="POST" class="edit-form">
                         <input type="hidden" name="edit_media" value="<?php echo $m['id']; ?>">
                         <label>ISBN:</label>
-                        <input type="text" name="isbn" value="<?php echo htmlspecialchars($m['isbn']); ?>" required>
+                        <input type="text" name="isbn" value="<?php echo htmlspecialchars($m['isbn']); ?>">
+                        <label>ISAN:</label>
+                        <input type="text" name="isan" value="<?php echo htmlspecialchars($m['isan']); ?>">
                         <label>Title:</label>
                         <input type="text" name="title" value="<?php echo htmlspecialchars($m['title']); ?>" required>
                         <label>Author:</label>
@@ -311,14 +358,16 @@ $loans = $pdo->query("
                             <option value="ljudbok" <?php if($m['media_type']=='ljudbok') echo 'selected'; ?>>Audiobook</option>
                             <option value="film" <?php if($m['media_type']=='film') echo 'selected'; ?>>Film</option>
                         </select>
-                        <label>Category:</label>
-                        <select name="category_id">
-                            <?php foreach ($categories as $c): ?>
-                                <option value="<?php echo $c['id']; ?>" <?php if($c['id']==$m['category_id']) echo 'selected'; ?>>
+                        <label>SAB:</label>
+                        <select data-id="<?php echo $m['id']; ?>" class="edit-media-sab-preset" name="sab_code_preset" required>
+                            <?php foreach ($sabcategories as $c): ?>
+                                <option value="<?php echo $c['sab_code']; ?>" <?php if($m['sab_code']==$c['sab_code']) echo 'selected'; ?>>
                                     <?php echo htmlspecialchars($c['name']); ?>
                                 </option>
                             <?php endforeach; ?>
+                            <option value="custom" <?php if(!in_array($m['sab_code'], array_column($sabcategories, 'sab_code'))) echo 'selected'; ?>>Custom</option>
                         </select>
+                        <input data-id="<?php echo $m['id']; ?>" type="text" name="sab_code_custom" placeholder="Custom SAB Code" value="<?php if(!in_array($m['sab_code'], array_column($sabcategories, 'sab_code'))) echo htmlspecialchars($m['sab_code']); ?>" class="edit-media-sab-custom<?php if(in_array($m['sab_code'], array_column($sabcategories, 'sab_code'))) echo ' hidden'; ?>">
                         <label>Description:</label>
                         <textarea name="description"><?php echo htmlspecialchars($m['description']); ?></textarea>
                         <label>Price:</label>
@@ -350,7 +399,6 @@ $loans = $pdo->query("
 
         <table>
             <tr>
-                <th>ID</th>
                 <th>Media ID</th>
                 <th>Barcode</th>
                 <th>Status</th>
@@ -360,7 +408,6 @@ $loans = $pdo->query("
             $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll();
             foreach ($copies as $cp): ?>
             <tr>
-                <td><?php echo $cp['id']; ?></td>
                 <td><?php echo htmlspecialchars($cp['media_id']); ?></td>
                 <td><?php echo htmlspecialchars($cp['barcode']); ?></td>
                 <td><?php echo htmlspecialchars($cp['status']); ?></td>
