@@ -48,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_copy'])) {
     $mediaId = (int)$_POST['media_id'];
   //  $barcode = trim($_POST['barcode']);//changed barcode to auto generate
     $amountOfCopies = (int)($_POST['amount'] ?? 1); //defualt 1 copy
-    //MARK: HERE
 
     $stmt = $pdo->prepare("SELECT barcode FROM copy WHERE media_id = :media_id");
     $stmt->execute(['media_id' => $mediaId]);
