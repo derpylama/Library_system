@@ -27,12 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
+    $image = $_POST['image'] ?? null;
     $category = (int)$_POST['category_id'];
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
-    $stmt = $pdo->prepare("INSERT INTO media (isbn, title, author, media_type, category_id, description, price) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$isbn, $title, $author, $type, $category, $desc, $price]);
+    $stmt = $pdo->prepare("INSERT INTO media (isbn, title, author, media_type, image_url, category_id, description, price) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$isbn, $title, $author, $type, $image, $category, $desc, $price]);
     $message = "Media added successfully.";
 }
 
@@ -84,12 +85,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
+    $image = $_POST['image'] ?? null;
     $category = (int)$_POST['category_id'];
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
-    $stmt = $pdo->prepare("UPDATE media SET isbn=?, title=?, author=?, media_type=?, category_id=?, description=?, price=?, updated_at=NOW() WHERE id=?");
-    $stmt->execute([$isbn, $title, $author, $type, $category, $desc, $price, $id]);
+    $stmt = $pdo->prepare("UPDATE media SET isbn=?, title=?, author=?, media_type=?, image_url=?, category_id=?, description=?, price=?, updated_at=NOW() WHERE id=?");
+    $stmt->execute([$isbn, $title, $author, $type, $image, $category, $desc, $price, $id]);
     $message = "Media ID $id updated.";
 }
 
@@ -121,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan'])) {
 $categories = $pdo->query("SELECT id, name FROM category ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 $users = $pdo->query("SELECT id, username, password_, is_admin, created_at FROM user ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
 $media = $pdo->query("
-    SELECT m.id, m.isbn, m.title, m.author, m.media_type, c.name AS category, m.category_id, m.description, m.price, COUNT(cp.id) AS copies
+    SELECT m.id, m.isbn, m.title, m.author, m.media_type, m.image_url, c.name AS category, m.category_id, m.description, m.price, COUNT(cp.id) AS copies
     FROM media m
     LEFT JOIN category c ON m.category_id = c.id
     LEFT JOIN copy cp ON cp.media_id = m.id
@@ -407,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => showTab('users'));
     </table>
 </div>
 
+<<<<<<< Updated upstream
 <!-- COPIES TAB -->
 <div id="copies" class="tab hidden">
     <h2>Copies</h2>
@@ -418,6 +421,95 @@ document.addEventListener('DOMContentLoaded', () => showTab('users'));
             <option value="">-- Select Media --</option>
             <?php foreach ($media as $m): ?>
                 <option value="<?php echo $m['id']; ?>"><?php echo htmlspecialchars($m['title']); ?></option>
+=======
+        <!-- Add Media Form -->
+        <form method="POST" class="add-form">
+            <h3>Add New Media</h3>
+            <input type="text" name="isbn" placeholder="ISBN" required>
+            <input type="text" name="title" placeholder="Title" required>
+            <input type="text" name="author" placeholder="Author" required>
+            <select name="media_type">
+                <option value="bok">Book</option>
+                <option value="ljudbok">Audiobook</option>
+                <option value="film">Film</option>
+            </select>
+            <input type="text" name="image" placeholder="Image URL">
+            <select name="category_id" required>
+                <option value="">-- Select Category --</option>
+                <?php foreach ($categories as $c): ?>
+                    <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <textarea name="description" placeholder="Description"></textarea>
+            <input type="number" step="0.01" name="price" placeholder="Price (kr)">
+            <button type="submit" name="add_media">Add Media</button>
+        </form>
+
+        <table>
+            <tr>
+                <th>ISBN</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Media Type</th>
+                <th>Image Url</th>
+                <th>Category ID</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+            <?php foreach ($media as $m): ?>
+            <tr>
+                <td><?php echo htmlspecialchars($m['isbn']); ?></td>
+                <td><?php echo htmlspecialchars($m['title']); ?></td>
+                <td><?php echo htmlspecialchars($m['author']); ?></td>
+                <td><?php echo htmlspecialchars($m['media_type']); ?></td>
+                <td><?php echo !empty($m['image_url']) ? '<a href="'.htmlspecialchars($m['image_url']).'" target="_blank"><img src="'.htmlspecialchars($m['image_url']).'" alt="Image" style="height:50px;"></a>' : '<img src="'.htmlspecialchars($m['image_url']).'" alt=" " style="height:50px;">'; ?></td>
+                <td><?php echo htmlspecialchars($m['category_id']); ?></td>
+                <td><?php echo htmlspecialchars($m['description']); ?></td>
+                <td><?php echo htmlspecialchars($m['price']); ?></td>
+                <td>
+                    <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden"  name="delete_media" value="<?php echo $m['id']; ?>">
+                        <button class="delete action-button" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            <tr id="edit-form-media-<?php echo $m['id']; ?>" class="hidden">
+                <td colspan="8">
+                    <form method="POST" class="edit-form">
+                        <input type="hidden" name="edit_media" value="<?php echo $m['id']; ?>">
+                        <label>ISBN:</label>
+                        <input type="text" name="isbn" value="<?php echo htmlspecialchars($m['isbn']); ?>" required>
+                        <label>Title:</label>
+                        <input type="text" name="title" value="<?php echo htmlspecialchars($m['title']); ?>" required>
+                        <label>Author:</label>
+                        <input type="text" name="author" value="<?php echo htmlspecialchars($m['author']); ?>" required>
+                        <label>Media Type:</label>
+                        <select name="media_type">
+                            <option value="bok" <?php if($m['media_type']=='bok') echo 'selected'; ?>>Book</option>
+                            <option value="ljudbok" <?php if($m['media_type']=='ljudbok') echo 'selected'; ?>>Audiobook</option>
+                            <option value="film" <?php if($m['media_type']=='film') echo 'selected'; ?>>Film</option>
+                        </select>
+                        <label>Image Url:</label>
+                        <input type="text" name="image" value="<?php echo htmlspecialchars($m['image_url']); ?>">
+                        <label>Category:</label>
+                        <select name="category_id">
+                            <?php foreach ($categories as $c): ?>
+                                <option value="<?php echo $c['id']; ?>" <?php if($c['id']==$m['category_id']) echo 'selected'; ?>>
+                                    <?php echo htmlspecialchars($c['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <label>Description:</label>
+                        <textarea name="description"><?php echo htmlspecialchars($m['description']); ?></textarea>
+                        <label>Price:</label>
+                        <input type="number" step="0.01" name="price" value="<?php echo htmlspecialchars($m['price']); ?>">
+                        <button type="submit">Save Changes</button>
+                    </form>
+                </td>
+            </tr>
+>>>>>>> Stashed changes
             <?php endforeach; ?>
         </select>
         <input type="text" name="barcode" placeholder="Barcode" required>

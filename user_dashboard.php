@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_loan_id'])) {
 // Fetch all media
 $mediaQuery = "
 SELECT 
-  m.id, m.title, m.author, m.media_type, m.description,
+  m.id, m.title, m.author, m.media_type, m.image_url, m.description,
   COUNT(c.id) AS total_copies,
   SUM(CASE WHEN c.status = 'available' THEN 1 ELSE 0 END) AS available_copies,
   SUM(CASE WHEN c.status = 'on_loan' THEN 1 ELSE 0 END) AS loaned_copies
@@ -194,6 +194,7 @@ function toggleView(view) {
 <div class="message"><?php echo htmlspecialchars($message); ?></div>
 <?php endif; ?>
 
+<<<<<<< Updated upstream
 <!-- All Media View -->
 <div id="media-view" class="grid">
 <?php foreach ($mediaList as $media): ?>
@@ -213,6 +214,30 @@ function toggleView(view) {
                 <?php echo ($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media'; ?>
             </button>
         </form>
+=======
+    <!-- All Media View -->
+    <div id="media-view" class="grid">
+    <?php foreach ($mediaList as $media): ?>
+        <div class="card">
+            <h3><?php echo htmlspecialchars($media['title']); ?></h3>
+            <?= !empty($media['image_url']) ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">' : '' ?>
+            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
+            <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
+            <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
+            <p>
+                <strong>Total:</strong> <?php echo $media['total_copies'] ?? 0; ?><br>
+                <strong>Available:</strong> <?php echo $media['available_copies'] ?? 0; ?><br>
+                <strong>Loaned:</strong> <?php echo $media['loaned_copies'] ?? 0; ?>
+            </p>
+            <form method="POST">
+                <input type="hidden" name="media_id" value="<?php echo $media['id']; ?>">
+                <button type="submit" <?php echo ($media['available_copies'] == 0) ? 'disabled' : ''; ?>>
+                    <?php echo ($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media'; ?>
+                </button>
+            </form>
+        </div>
+    <?php endforeach; ?>
+>>>>>>> Stashed changes
     </div>
 <?php endforeach; ?>
 </div>
