@@ -148,6 +148,7 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <?php foreach ($mediaList as $media): ?>
         <div class="card">
             <h3><?php echo htmlspecialchars($media['title']); ?></h3>
+            <?= !empty($media['image_url']) ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">' : '' ?>
             <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
             <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
             <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
@@ -184,7 +185,6 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
             <?php foreach ($userLoans as $loan): ?>
                 <div class="card">
                     <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
-                    <?= !empty($media['image_url']) ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">' : '' ?>
                     <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
                     <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
                     <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
