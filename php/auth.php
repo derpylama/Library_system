@@ -9,15 +9,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'login') {
         $username = trim($_POST['username']);
+
+        // Get sha256 of the password
         $password = $_POST['password'];
+        $password = hash('sha256', $password);
 
 
         $stmt = $pdo->prepare('SELECT id, username, passwordhash, is_admin FROM user WHERE username = ?');
         $stmt->execute([$username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Get sha256 of the password
-        $password = hash('sha256', $password);
 
         if ($user && ($password == $user['passwordhash'])) {
             $_SESSION['user_id'] = $user['id'];
@@ -35,7 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'register') {
         $username = trim($_POST['username']);
+
+        // Get sha256 of the password
         $password = $_POST['password'];
+        $passwordhash = hash('sha256', $password);
     
         if (strlen($username) < 3 || strlen($password) < 3) {
             $error = 'Username and password must be at least 3 characters long.';
@@ -47,7 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Username already exists!';
             } else {
                 $insert = $pdo->prepare('INSERT INTO user (username, passwordhash) VALUES (?, ?)');
-                $passwordhash = hash('sha256', $password);
                 $insert->execute([$username, $passwordhash]);
                 header('Location: ../index.php?registered=1');
                 exit;
