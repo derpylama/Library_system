@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan'])) {
 
 // --- FETCH DATA ---
 $categories = $pdo->query("SELECT id, name FROM category ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-$users = $pdo->query("SELECT id, username, passwordhash, is_admin, created_at FROM user ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
+$users = $pdo->query("SELECT id, username, is_admin, created_at FROM user ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
 $media = $pdo->query("
     SELECT m.id, m.isbn, m.title, m.author, m.media_type, c.name AS category, m.category_id, m.description, m.price, COUNT(cp.id) AS copies
     FROM media m
@@ -172,7 +172,7 @@ $loans = $pdo->query("
             <tr>
                 
                 
-                <td><?php echo htmlspecialchars($u['passwordhash']); ?></td>
+                <td><?php echo htmlspecialchars($u['username']); ?></td>
                 <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
                 <td><?php echo $u['created_at']; ?></td>
                 <td>
