@@ -147,8 +147,12 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <div id="media-view" class="grid">
     <?php foreach ($mediaList as $media): ?>
         <div class="card">
-            <h3><?php echo htmlspecialchars($media['title']); ?></h3>
-            <?= !empty($media['image_url']) ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">' : '' ?>
+            <div class="media-title-container">
+                <h3><?php echo htmlspecialchars($media['title']); ?></h3>
+            </div>
+            <div class="media-image-container">
+                <?= !empty($media['image_url']) ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">' : '' ?>
+            </div>
             <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
             <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
             <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
