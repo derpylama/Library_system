@@ -1,5 +1,6 @@
 <?php
 require_once('php/db.php');
+require_once('php/barcode.php');
 
 session_start();
 
@@ -12,7 +13,7 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT is_admin FROM user WHERE id = ?");
 $stmt->execute([$userId]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch();
 
 if (!$user || $user['is_admin'] != 1) {
     echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
@@ -37,18 +38,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
-    $stmt = $pdo->prepare("INSERT INTO media (isbn, isan, title, author, media_type, sab_code, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$isbn, $isan, $title, $author, $type, $sabcode, $desc, $price]);
+    //create barcode for media
+    $allBarcodes = $pdo->query("SELECT barcode FROM media")->fetchAll(PDO::FETCH_COLUMN);
+    $barcode = generateBarcode($title, $allBarcodes);
+
+
+    $stmt = $pdo->prepare("INSERT INTO media (isbn, isan, barcode, title, author, media_type, sab_code, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$isbn, $isan, $barcode, $title, $author, $type, $sabcode, $desc, $price]);
     $message = "Media added successfully.";
 }
 
 // Add copy
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_copy'])) {
     $mediaId = (int)$_POST['media_id'];
-    $barcode = trim($_POST['barcode']);
-    $stmt = $pdo->prepare("INSERT INTO copy (media_id, barcode, status) VALUES (?, ?, 'available')");
-    $stmt->execute([$mediaId, $barcode]);
-    $message = "Copy added successfully.";
+  //  $barcode = trim($_POST['barcode']);//changed barcode to auto generate
+    $amountOfCopies = (int)($_POST['amount'] ?? 1); //defualt 1 copy
+
+    $stmt = $pdo->prepare("SELECT barcode FROM copy WHERE media_id = :media_id");
+    $stmt->execute(['media_id' => $mediaId]);
+    $barcodes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    //maybe remove second sql query
+    $stmt = $pdo->prepare("SELECT barcode FROM media WHERE id = :media_id");
+    $stmt->execute(['media_id' => $mediaId]);
+    $barcode = $stmt->fetchColumn();
+
+    $newBarcodes=BarcodesForCopy($amountOfCopies, $barcodes, $barcode);
+
+    $values = [];
+    $params = [];
+
+    foreach ($newBarcodes as $code) {
+        $values[] = "(?, ?, 'available')";
+        $params[] = $mediaId;
+        $params[] = $code;
+    }
+    
+    $sql = "INSERT INTO copy (media_id, barcode, status) VALUES " . implode(", ", $values);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    
+    $message = "Inserted " . count($newBarcodes) . " copies successfully. " . implode(", ", $newBarcodes);
 }
 
 // Delete user
@@ -129,15 +159,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan'])) {
 }
 
 // --- FETCH DATA ---
-$sabcategories = $pdo->query("SELECT sab_code, name FROM sab_category ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-$users = $pdo->query("SELECT id, username, is_admin, created_at FROM user ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
+$sabcategories = $pdo->query("SELECT sab_code, name FROM sab_category ORDER BY name")->fetchAll();
+$users = $pdo->query("SELECT id, username, is_admin, created_at FROM user ORDER BY id")->fetchAll();
 $media = $pdo->query("
     SELECT m.id, m.isbn, m.isan, m.title, m.author, m.media_type, m.sab_code, m.description, m.price, COUNT(cp.id) AS copies
     FROM media m
     LEFT JOIN copy cp ON cp.media_id = m.id
     GROUP BY m.id
     ORDER BY m.title
-")->fetchAll(PDO::FETCH_ASSOC);
+")->fetchAll();
 $loans = $pdo->query("
     SELECT l.id, u.username, m.title, c.barcode, l.loan_date, l.due_date, l.return_date, l.status
     FROM loan l
@@ -145,7 +175,7 @@ $loans = $pdo->query("
     JOIN copy c ON c.id = l.copy_id
     JOIN media m ON c.media_id = m.id
     ORDER BY l.loan_date DESC
-")->fetchAll(PDO::FETCH_ASSOC);
+")->fetchAll();
 
 ?>
 
@@ -375,7 +405,7 @@ $loans = $pdo->query("
                 <th>Actions</th>
             </tr>
             <?php
-            $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+            $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll();
             foreach ($copies as $cp): ?>
             <tr>
                 <td><?php echo htmlspecialchars($cp['media_id']); ?></td>
