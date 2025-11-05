@@ -156,7 +156,10 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <div id="media-view" class="grid">
 
         <?php
+        $filteredMediaList = []; // Maps [-1/score, <media>]
         foreach ($mediaList as $media) {
+
+            $totalScore = 0;
 
             // Iterate each field, does it exists as a match in a search result? If so highlight the matching part
             //   also keep track if this media had any matches at all in search results if not and search result is not empty skip it
@@ -173,6 +176,9 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
                             // Check matches for this field
                             foreach ($result['matches'] as $match) {
                                 if ($match['field'] === $field) {
+                                    // Append to total score
+                                    $totalScore += $match['score'];
+
                                     // Highlight match in value
                                     $start = $match['index'];
                                     $length = $match['length'];
@@ -200,6 +206,16 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
                 }
             }
 
+            $filteredMediaList[] = [$totalScore, $media];
+        }
+
+        // Sort $filteredMediaList by score descending
+        usort($filteredMediaList, function($a, $b) {
+            return $b[0] <=> $a[0];
+        });
+
+        foreach ($filteredMediaList as $mediaWithScore) {
+            $media = $mediaWithScore[1];
             echo '
             <div class="card">
                 <h3>' . $media['title'] . '</h3>
