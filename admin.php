@@ -1,5 +1,6 @@
 <?php
 require_once('php/db.php');
+require_once('php/barcode.php');
 
 session_start();
 
@@ -32,15 +33,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
-    $stmt = $pdo->prepare("INSERT INTO media (isbn, title, author, media_type, category_id, description, price) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$isbn, $title, $author, $type, $category, $desc, $price]);
+    //create barcode for media
+    $allBarcodes = $pdo->query("SELECT barcode FROM media")->fetchAll(PDO::FETCH_COLUMN);
+    $barcode = generateBarcode($title, $allBarcodes);
+
+
+    $stmt = $pdo->prepare("INSERT INTO media (isbn, barcode, title, author, media_type, category_id, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$isbn, $barcode, $title, $author, $type, $category, $desc, $price]);
     $message = "Media added successfully.";
 }
 
 // Add copy
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_copy'])) {
     $mediaId = (int)$_POST['media_id'];
-    $barcode = trim($_POST['barcode']);
+    $barcode = trim($_POST['barcode']);//change barcode to auto generate
+
+    //MARK: HERE
+
+    //make check for existing barcodes if media has noone
+
+    //if it has just use  BarcodesForCopy function to fill in gaps
+
+
+
     $stmt = $pdo->prepare("INSERT INTO copy (media_id, barcode, status) VALUES (?, ?, 'available')");
     $stmt->execute([$mediaId, $barcode]);
     $message = "Copy added successfully.";

@@ -125,7 +125,7 @@ print_r(BarcodesForCopy(2, $existingCopies, 'HARRY_A'));
 // )
 
 
-//MARK: FULL TEST
+/* //MARK: FULL TEST
 
 //Full test 
 $existingCopies2 = ['HARRY_C_3','HARRY_C_1','HARRY_C_17'];
@@ -139,7 +139,7 @@ print_r(BarcodesForCopy($amount, $existingCopies2,generateBarcode("härry potter
 // Array ( [0] => HARRY_C_2 [1] => HARRY_C_4 )
 
 
-?>
+?> */
 
 
 
