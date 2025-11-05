@@ -68,3 +68,7 @@ body {
 .hidden {
     display: none;
 }
+
+.search-highlight {
+    background-color: yellow;
+}

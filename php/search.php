@@ -34,8 +34,17 @@ function normalizeForMatching(string $field, string $value): string {
 }
 
 // Returns [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
-function SearchMedia($medias, string $searchTerm, ?string $filterType = null): array {
+// If passed uses $weightOverrides instead of default weights, NOT MERGED WITH DEFAULTS
+function SearchMedia($medias, string $searchTerm, ?string $filterType = null, ?array $weightOverrides = null): array {
     global $fieldWeights;
+
+    $usedWeights = [];
+    if ($weightOverrides !== null) {
+        // Merge overrides
+        $usedWeights = $weightOverrides;
+    } else {
+        $usedWeights = $fieldWeights;
+    }
 
     // If term is empty return empty
     if (trim($searchTerm) === '') {
@@ -47,7 +56,8 @@ function SearchMedia($medias, string $searchTerm, ?string $filterType = null): a
 
     // Iterate tokens
     $results = [];
-    foreach ($medias as $mediaId => $media) {
+    foreach ($medias as $mediaIndex => $media) {
+        $mediaId = $media['id'] ?? $mediaIndex;
 
         // filterType?
         if ($filterType !== null && isset($media['media_type']) && $media['media_type'] !== $filterType) {
@@ -56,7 +66,7 @@ function SearchMedia($medias, string $searchTerm, ?string $filterType = null): a
 
         $mediaMatches = [];
 
-        foreach ($fieldWeights as $field => $weight) {
+        foreach ($usedWeights as $field => $weight) {
             $content = $media[$field] ?? '';
 
             foreach ($tokens as $token) {
