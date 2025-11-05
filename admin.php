@@ -31,6 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $image = $_POST['image'] ?? null;
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
+    
+    // Remove any hyphens from ISBN and ISAN
+    $isbn = str_replace('-', '', $isbn);
+    $isan = str_replace('-', '', $isan);
 
     $sabcode_preset = (int)$_POST['sab_code_preset'];
     $sabcode_custom = trim($_POST['sab_code_custom']);
@@ -123,7 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
     $image = $_POST['image'] ?? null;
-    
+        
+    // Remove any hyphens from ISBN and ISAN
+    $isbn = str_replace('-', '', $isbn);
+    $isan = str_replace('-', '', $isan);
+
     $sabcode_preset = $_POST['sab_code_preset'];
     $sabcode_custom = trim($_POST['sab_code_custom']);
     $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
