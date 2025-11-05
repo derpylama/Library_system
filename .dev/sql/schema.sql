@@ -27,6 +27,7 @@ CREATE TABLE media (
     title VARCHAR(512) NOT NULL,
     author VARCHAR(255) DEFAULT NULL,
     media_type ENUM('bok', 'ljudbok', 'film') NOT NULL,
+    image_url MEDIUMTEXT DEFAULT NULL,
     sab_code VARCHAR(150) DEFAULT NULL,
     description TEXT DEFAULT NULL,
     price DECIMAL(10,2) DEFAULT 0.00,
