@@ -63,9 +63,26 @@ button:disabled {
 .admin-btn {
     background-color: #28a745;
 }
+.media-title-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+    overflow: hidden;
+}
+
+.media-image-container {
+    background-color: #ffffff;
+    width: fit-content;
+    height: fit-content;
+    justify-self: center;
+    align-self: center;
+}
+
 .media-image {
     max-width: 100%;
     height: auto;
     border-radius: 5px;
     margin-top: 10px;
+    aspect-ratio: 3 / 4;
 }
