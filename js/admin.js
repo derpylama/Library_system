@@ -20,4 +20,34 @@ function toggleEditForm(id, type = 'media') {
 }
 
 // Default tab on load
-document.addEventListener('DOMContentLoaded', () => showTab('users'));
+document.addEventListener('DOMContentLoaded', () => {
+    // On change for add-media-sab-preset to when selected option has value 'custom', remove hidden class from add-media-sab-custom, else add hidden class to add-media-sab-custom
+    const sabCodePreset = document.getElementById('add-media-sab-preset');
+    const sabCodeCustom = document.getElementById('add-media-sab-custom');
+    if (sabCodePreset && sabCodeCustom) {
+        sabCodePreset.addEventListener('change', () => {
+            if (sabCodePreset.value === 'custom') {
+                sabCodeCustom.classList.remove('hidden');
+            } else {
+                sabCodeCustom.classList.add('hidden');
+            }
+        });
+    }
+
+    // On change for any class .edit-media-sab-preset to when selected option has value 'custom', remove hidden class from corresponding .edit-media-sab-custom, else add hidden class to corresponding .edit-media-sab-custom
+    //   both share same data-id=
+    document.querySelectorAll('.edit-media-sab-preset').forEach(presetSelect => {
+        presetSelect.addEventListener('change', () => {
+            const id = presetSelect.getAttribute('data-id');
+            const customInput = document.querySelector('.edit-media-sab-custom[data-id="' + id + '"]');
+            if (presetSelect.value === 'custom') {
+                customInput.classList.remove('hidden');
+            } else {
+                customInput.classList.add('hidden');
+            }
+        });
+    });
+
+    // Show tab
+    showTab('users')
+});
