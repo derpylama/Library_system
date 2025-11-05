@@ -1,7 +1,6 @@
 <?php
 require_once('php/db.php');
 require_once('php/search.php');
-require_once('php/image_controller.php');
 
 session_start();
 
@@ -202,9 +201,13 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
             }
 
             echo '
-            <div class="card" '.cardSize($media['image_url']).'>
+            <div class="card">
                 <h3>' . $media['title'] . '</h3>
-                '.imageType($media['image_url']);.'
+                ' . (
+                    (!empty($media['image_url']))
+                    ? '<img src="'.$media['image_url'].'" class="media-image">'
+                    : ''
+                ) . '
                 <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
                 <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
                 <p>' . nl2br($media['description']) . '</p>
