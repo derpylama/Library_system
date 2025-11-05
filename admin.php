@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan'])) {
 $sabcategories = $pdo->query("SELECT sab_code, name FROM sab_category ORDER BY name")->fetchAll();
 $users = $pdo->query("SELECT id, username, is_admin, created_at FROM user ORDER BY id")->fetchAll();
 $media = $pdo->query("
-    SELECT m.id, m.isbn, m.isan, m.title, m.author, m.media_type, m.sab_code, m.description, m.price, COUNT(cp.id) AS copies
+    SELECT m.id, m.isbn, m.isan, m.title, m.author, m.media_type, m.image_url, m.sab_code, m.description, m.price, COUNT(cp.id) AS copies
     FROM media m
     LEFT JOIN copy cp ON cp.media_id = m.id
     GROUP BY m.id
@@ -298,6 +298,7 @@ $loans = $pdo->query("
                 <option value="ljudbok">Audiobook</option>
                 <option value="film">Film</option>
             </select>
+            <input type="text" name="image" placeholder="Image URL">
             <!-- We shold have the preset dropdown or CUSTOM which allows entering string, SAB is always string -->
             <select id="add-media-sab-preset" name="sab_code_preset" required>
                 <option value="">-- Select SAB Category --</option>
