@@ -26,11 +26,11 @@ INSERT INTO category (sab_code, name) VALUES
 ('A_', 'Tidningar'); -- "A_" is "Ä"
 
 
-INSERT INTO user (username, password_, is_admin, created_at) VALUES
-('admin', 'admin123', 1, '2025-10-30 17:53:11'),
-('alice', 'password1', 0, '2025-10-30 17:53:11'),
-('bob', 'password2', 0, '2025-10-30 17:53:11'),
-('person2', 'person2', 0, '2025-10-30 17:55:57');
+INSERT INTO user (username, passwordhash, is_admin, created_at) VALUES
+('admin', SHA2('admin123', 256), 1, '2025-10-30 17:53:11'),
+('alice', SHA2('password1', 256), 0, '2025-10-30 17:53:11'),
+('bob', SHA2('password2', 256), 0, '2025-10-30 17:53:11'),
+('person2', SHA2('person2', 256), 0, '2025-10-30 17:55:57');
 
 
 INSERT INTO media (isbn, title, author, media_type, category_id, description, price, created_at, updated_at, barcode) VALUES

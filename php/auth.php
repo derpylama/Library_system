@@ -12,12 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'];
 
 
-        $stmt = $pdo->prepare('SELECT id, username, password_, is_admin FROM user WHERE username = ?');
+        $stmt = $pdo->prepare('SELECT id, username, passwordhash, is_admin FROM user WHERE username = ?');
         $stmt->execute([$username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Get sha256 of the password
+        $password = hash('sha256', $password);
 
-        if ($user && ($password == $user['password_'])) {
+        if ($user && ($password == $user['passwordhash'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['is_admin'] = $user['is_admin'];
@@ -44,8 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($check->fetch()) {
                 $error = 'Username already exists!';
             } else {
-                $insert = $pdo->prepare('INSERT INTO user (username, password_) VALUES (?, ?)');
-                $insert->execute([$username, $password]);
+                $insert = $pdo->prepare('INSERT INTO user (username, passwordhash) VALUES (?, ?)');
+                $passwordhash = hash('sha256', $password);
+                $insert->execute([$username, $passwordhash]);
                 header('Location: ../index.php?registered=1');
                 exit;
             }
