@@ -1,5 +1,6 @@
 <?php
 require_once('php/db.php');
+require_once('php/search.php');
 
 session_start();
 
@@ -72,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_loan_id'])) {
 // Fetch all media
 $mediaQuery = "
 SELECT 
-  m.id, m.title, m.author, m.media_type, m.description, m.isbn, m.isan, sab_code,
+  m.*,
   COUNT(c.id) AS total_copies,
   SUM(CASE WHEN c.status = 'available' THEN 1 ELSE 0 END) AS available_copies,
   SUM(CASE WHEN c.status = 'on_loan' THEN 1 ELSE 0 END) AS loaned_copies
@@ -82,6 +83,19 @@ GROUP BY m.id
 ORDER BY m.title;
 ";
 $mediaList = $pdo->query($mediaQuery)->fetchAll(PDO::FETCH_ASSOC);
+
+// TEST SEARCH FUNCTIONALITY
+if (isset($_GET["q"]) && !empty(trim($_GET["q"]))) {
+    $searchTerm = trim($_GET["q"]);
+    $searchResults = SearchMedia($mediaList, $searchTerm);
+    echo "
+    <script>
+    console.log('Search Term: " . $searchTerm . "');
+    console.log('Search Results: ', JSON.parse('" . json_encode($searchResults) . "'));
+    </script>
+    ";
+}
+
 
 // Fetch user's active and past loans
 $loanQuery = "

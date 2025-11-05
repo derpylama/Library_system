@@ -1,0 +1,104 @@
+<?php
+
+$fieldWeights = [
+    "isbn" => 5,
+    "isan" => 5,
+    "sab_code" => 4,
+    "title" => 3,
+    "author" => 2,
+    "description" => 1
+];
+
+// Function to split search term into tokens, handling quoted phrases
+function tokenizeSearchTerm(string $term): array {
+    $tokens = [];
+    preg_match_all('/"([^"]+)"|(\S+)/', $term, $matches);
+    foreach ($matches[1] as $i => $match) {
+        $tokens[] = $match !== "" ? $match : $matches[2][$i];
+    }
+    return $tokens;
+}
+
+function normalizeForMatching(string $field, string $value): string {
+    // Remove hyphens only for isbn/isan
+    if (in_array($field, ['isbn', 'isan'])) {
+        return str_replace('-', '', mb_strtolower($value));
+    }
+    // Case sensitive for BARCODE
+    if ($field === 'barcode') {
+        return $value;
+    }
+
+    // case-insensitive for other fields
+    return mb_strtolower($value); 
+}
+
+// Returns [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
+function SearchMedia($medias, string $searchTerm, ?string $filterType = null): array {
+    global $fieldWeights;
+    
+    // If term is empty return empty
+    if (trim($searchTerm) === '') {
+        return [];
+    }
+
+    // Tokenize search term
+    $tokens = tokenizeSearchTerm($searchTerm);
+
+    // Iterate tokens
+    $results = [];
+    foreach ($medias as $mediaId => $media) {
+        $mediaMatches = [];
+
+        foreach ($fieldWeights as $field => $weight) {
+            $content = $media[$field] ?? '';
+
+            foreach ($tokens as $token) {
+                $normalizedToken = normalizeForMatching($field, $token);
+                $normalizedContent = normalizeForMatching($field, $content);
+
+                // Check for match and if so where
+                $pos = stripos($normalizedContent, $normalizedToken);
+                if ($pos !== false) {
+                    // Get the length of the matching token
+                    $matchLength = mb_strlen($token);
+
+                    // Calculate score bsaed on $weight * amnt-matched
+                    $amntMatched = $matchLength / max(1, mb_strlen($normalizedContent));
+                    $score = $weight * $amntMatched;
+
+                    // Record the match
+                    $mediaMatches[] = [
+                        'field' => $field,
+                        'index' => $pos,
+                        'length' => $matchLength,
+                        'score' => $score,
+                        'token' => $token
+                    ];
+                }
+            }
+        }
+
+        // Sum scores for this media
+        if (!empty($mediaMatches)) {
+            // Sum scores for sorting
+            $totalScore = array_sum(array_column($mediaMatches, 'score'));
+
+            $results[] = [
+                'mediaId' => $mediaId,
+                'score' => $totalScore,
+                'matches' => $mediaMatches
+            ];
+        }
+    }
+    
+    // Sort results by score descending
+    usort($results, function($a, $b) {
+        if ($a['score'] == $b['score']) {
+            return 0;
+        }
+        return ($a['score'] < $b['score']) ? 1 : -1;
+    });
+
+    return $results;
+}
