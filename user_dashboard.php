@@ -1,6 +1,7 @@
 <?php
 require_once('php/db.php');
 require_once('php/search.php');
+require_once('php/image_controller.php');
 
 session_start();
 
@@ -217,8 +218,10 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($filteredMediaList as $mediaWithScore) {
             $media = $mediaWithScore[1];
             echo '
-            <div class="card">
-                <h3>' . $media['title'] . '</h3>
+            <div class="card" '.cardSize($media['image_url']).'>
+                <div class="media-title-container">
+                    <h3>' . $media['title'] . '</h3>
+                </div>
                 <div class="media-image-container">
                 '.imageType($media['image_url']).'
                 </div>
