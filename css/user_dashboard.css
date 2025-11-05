@@ -1,6 +1,12 @@
 body {
     padding: 20px;
 }
+h3 {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0;
+    margin-top: 0;
+}
 .header {
     display: flex;
     justify-content: space-between;
@@ -56,4 +62,10 @@ button:disabled {
 .hidden { display: none; }
 .admin-btn {
     background-color: #28a745;
+}
+.media-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-top: 10px;
 }
