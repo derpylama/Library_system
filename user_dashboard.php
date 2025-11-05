@@ -1,6 +1,7 @@
 <?php
 require_once('php/db.php');
 require_once('php/search.php');
+require_once('php/image_controller.php');
 
 session_start();
 
@@ -146,12 +147,12 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- All Media View -->
     <div id="media-view" class="grid">
     <?php foreach ($mediaList as $media): ?>
-        <div class="card">
+        <div class="card" <?= cardSize($media['image_url']) ?>>
             <div class="media-title-container">
                 <h3><?php echo htmlspecialchars($media['title']); ?></h3>
             </div>
             <div class="media-image-container">
-                <?= !empty($media['image_url']) ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">' : '' ?>
+            <?= imageType($media['image_url']); ?>
             </div>
             <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
             <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
