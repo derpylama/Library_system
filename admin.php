@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $isbn = trim($_POST['isbn']);
     $isan = trim($_POST['isan']);
     $title = trim($_POST['title']);
+    $image = $_POST['image'] ?? null;
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
 
@@ -43,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $barcode = generateBarcode($title, $allBarcodes);
 
 
-    $stmt = $pdo->prepare("INSERT INTO media (isbn, isan, barcode, title, author, media_type, sab_code, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$isbn, $isan, $barcode, $title, $author, $type, $sabcode, $desc, $price]);
+    $stmt = $pdo->prepare("INSERT INTO media (isbn, isan, barcode, title, author, media_type, image_url, sab_code, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$isbn, $isan, $barcode, $title, $author, $type, $image, $sabcode, $desc, $price]);
     $message = "Media added successfully.";
 }
 
@@ -121,16 +122,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
-
+    $image = $_POST['image'] ?? null;
+    
     $sabcode_preset = $_POST['sab_code_preset'];
     $sabcode_custom = trim($_POST['sab_code_custom']);
     $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
-
+    
+    
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
-    $stmt = $pdo->prepare("UPDATE media SET isbn=?, isan=?, title=?, author=?, media_type=?, sab_code=?, description=?, price=?, updated_at=NOW() WHERE id=?");
-    $stmt->execute([$isbn, $isan, $title, $author, $type, $sabcode, $desc, $price, $id]);
+    $stmt = $pdo->prepare("UPDATE media SET isbn=?, isan=?, title=?, author=?, media_type=?, image_url=?, sab_code=?, description=?, price=?, updated_at=NOW() WHERE id=?");
+    $stmt->execute([$isbn, $isan, $title, $author, $type, $image, $sabcode, $desc, $price, $id]);
     $message = "Media ID $id updated.";
 }
 
@@ -317,6 +320,7 @@ $loans = $pdo->query("
                 <th>Title</th>
                 <th>Author</th>
                 <th>Media Type</th>
+                <th>Image Url</th>
                 <th>SAB</th>
                 <th>Description</th>
                 <th>Price</th>
@@ -329,6 +333,7 @@ $loans = $pdo->query("
                 <td><?php echo htmlspecialchars($m['title']); ?></td>
                 <td><?php echo htmlspecialchars($m['author']); ?></td>
                 <td><?php echo htmlspecialchars($m['media_type']); ?></td>
+                <td><?php echo !empty($m['image_url']) ? '<a href="'.htmlspecialchars($m['image_url']).'" target="_blank"><img src="'.htmlspecialchars($m['image_url']).'" alt="Image" style="height:50px;"></a>' : '<img src="'.htmlspecialchars($m['image_url']).'" alt=" " style="height:50px;">'; ?></td>
                 <td><?php echo htmlspecialchars($m['sab_code']); ?></td>
                 <td><?php echo htmlspecialchars($m['description']); ?></td>
                 <td><?php echo htmlspecialchars($m['price']); ?></td>
@@ -358,6 +363,8 @@ $loans = $pdo->query("
                             <option value="ljudbok" <?php if($m['media_type']=='ljudbok') echo 'selected'; ?>>Audiobook</option>
                             <option value="film" <?php if($m['media_type']=='film') echo 'selected'; ?>>Film</option>
                         </select>
+                        <label>Image Url:</label>
+                        <input type="text" name="image" value="<?php echo htmlspecialchars($m['image_url']); ?>">
                         <label>SAB:</label>
                         <select data-id="<?php echo $m['id']; ?>" class="edit-media-sab-preset" name="sab_code_preset" required>
                             <?php foreach ($sabcategories as $c): ?>
