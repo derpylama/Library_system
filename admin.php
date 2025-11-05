@@ -46,19 +46,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
 // Add copy
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_copy'])) {
     $mediaId = (int)$_POST['media_id'];
-    $barcode = trim($_POST['barcode']);//change barcode to auto generate
-
+  //  $barcode = trim($_POST['barcode']);//changed barcode to auto generate
+    $amountOfCopies = (int)($_POST['amount'] ?? 1); //defualt 1 copy
     //MARK: HERE
 
-    //make check for existing barcodes if media has noone
+    $stmt = $pdo->prepare("SELECT barcode FROM copy WHERE media_id = :media_id");
+    $stmt->execute(['media_id' => $mediaId]);
+    $barcodes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    //if it has just use  BarcodesForCopy function to fill in gaps
+    //maybe remove second sql query
+    $stmt = $pdo->prepare("SELECT barcode FROM media WHERE id = :media_id");
+    $stmt->execute(['media_id' => $mediaId]);
+    $barcode = $stmt->fetchColumn();
 
+    $newBarcodes=BarcodesForCopy($amountOfCopies, $barcodes, $barcode);
 
+    $values = [];
+    $params = [];
 
-    $stmt = $pdo->prepare("INSERT INTO copy (media_id, barcode, status) VALUES (?, ?, 'available')");
-    $stmt->execute([$mediaId, $barcode]);
-    $message = "Copy added successfully.";
+    foreach ($newBarcodes as $code) {
+        $values[] = "(?, ?, 'available')";
+        $params[] = $mediaId;
+        $params[] = $code;
+    }
+    
+    $sql = "INSERT INTO copy (media_id, barcode, status) VALUES " . implode(", ", $values);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    
+    $message = "Inserted " . count($newBarcodes) . " copies successfully. " . implode(", ", $newBarcodes);
 }
 
 // Delete user
