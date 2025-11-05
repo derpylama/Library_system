@@ -146,6 +146,7 @@ $loans = $pdo->query("
     JOIN media m ON c.media_id = m.id
     ORDER BY l.loan_date DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -177,13 +178,43 @@ $loans = $pdo->query("
         <h2>Users</h2>
         <table>
             <tr><th>Username</th><th>Admin</th><th>Created</th><th>Active loans</th><th>Late loan</th><th>Total Loans</th><th>Total debt</th><th>Actions</th></tr>
-            <?php foreach ($users as $u): ?>
+            <?php foreach ($users as $u):?>
             <tr>
                 
                 
                 <td><?php echo htmlspecialchars($u['username']); ?></td>
                 <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
                 <td><?php echo $u['created_at']; ?></td>
+                <td>
+                    <?php
+                    $activeLoansStmt = $pdo->prepare("SELECT COUNT(*) FROM loan WHERE user_id = ? AND return_date IS NULL");
+                    $activeLoansStmt->execute([$u['id']]);
+                    echo $activeLoansStmt->fetchColumn();
+                    ?>
+                </td>
+                <td>
+                    <?php
+                    $lateLoanStmt = $pdo->prepare("SELECT COUNT(*) FROM loan WHERE user_id = ? AND return_date IS NULL AND due_date < CURDATE()");
+                    $lateLoanStmt->execute([$u['id']]);
+                    echo $lateLoanStmt->fetchColumn();
+                    ?>
+                </td>
+                <td>
+                    <?php
+                    $totalLoansStmt = $pdo->prepare("SELECT COUNT(*) FROM loan WHERE user_id = ?");
+                    $totalLoansStmt->execute([$u['id']]);
+                    echo $totalLoansStmt->fetchColumn();
+                    ?>
+                </td>
+                <td>
+                    <?php
+                    $debtStmt = $pdo->prepare("SELECT SUM(amount) FROM invoice WHERE user_id = ?");
+                    $debtStmt->execute([$u['id']]);
+                    $debt = $debtStmt->fetchColumn();
+                    echo $debt ? number_format($debt, 2) . " kr" : "0 kr";
+                    ?>
+                </td>
+                
                 <td>
                     <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $u['id']; ?>, 'user')">Edit</button>
                     <?php if ($u['id'] != $userId): ?>
