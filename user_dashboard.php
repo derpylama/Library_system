@@ -144,6 +144,14 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="message"><?php echo htmlspecialchars($message); ?></div>
     <?php endif; ?>
 
+    <!-- search bar -->
+    <div class="search-bar">
+        <form method="GET" action="user_dashboard.php">
+            <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
     <!-- All Media View -->
     <div id="media-view" class="grid">
 
