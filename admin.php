@@ -393,7 +393,7 @@ $loans = $pdo->query("
                     <option value="<?php echo $m['id']; ?>"><?php echo htmlspecialchars($m['title']); ?></option>
                 <?php endforeach; ?>
             </select>
-            <input type="text" name="barcode" placeholder="Barcode" required>
+            <input type="number" name="amount" min="1" max="1000" value="1" required >
             <button type="submit" name="add_copy">Add Copy</button>
         </form>
 
