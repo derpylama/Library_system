@@ -36,7 +36,7 @@ function normalizeForMatching(string $field, string $value): string {
 // Returns [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
 function SearchMedia($medias, string $searchTerm, ?string $filterType = null): array {
     global $fieldWeights;
-    
+
     // If term is empty return empty
     if (trim($searchTerm) === '') {
         return [];
@@ -48,6 +48,12 @@ function SearchMedia($medias, string $searchTerm, ?string $filterType = null): a
     // Iterate tokens
     $results = [];
     foreach ($medias as $mediaId => $media) {
+
+        // filterType?
+        if ($filterType !== null && isset($media['media_type']) && $media['media_type'] !== $filterType) {
+            continue;
+        }
+
         $mediaMatches = [];
 
         foreach ($fieldWeights as $field => $weight) {

@@ -84,7 +84,7 @@ ORDER BY m.title;
 ";
 $mediaList = $pdo->query($mediaQuery)->fetchAll(PDO::FETCH_ASSOC);
 
-// TEST SEARCH FUNCTIONALITY
+$searchResults = [];
 if (isset($_GET["q"]) && !empty(trim($_GET["q"]))) {
     $searchTerm = trim($_GET["q"]);
     $searchResults = SearchMedia($mediaList, $searchTerm);
@@ -145,34 +145,41 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- All Media View -->
     <div id="media-view" class="grid">
-    <?php foreach ($mediaList as $media): ?>
-        <div class="card">
-            <h3><?php echo htmlspecialchars($media['title']); ?></h3>
-            <?= !empty($media['image_url']) ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">' : '' ?>
-            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($media['author']); ?></p>
-            <p><strong>Type:</strong> <?php echo htmlspecialchars($media['media_type']); ?></p>
-            <p><?php echo nl2br(htmlspecialchars($media['description'])); ?></p>
-            <p>
-                <?php
-                if ($media['media_type'] !== 'film') {
-                    echo "<strong>ISBN: </strong>" . htmlspecialchars($media['isbn'] ?? 'N/A') . "<br>";
-                } else {
-                    echo "<strong>ISAN: </strong>" . htmlspecialchars($media['isan'] ?? 'N/A') . "<br>";
-                }
-                ?>
-                <strong>SAB:</strong> <?php echo $media['sab_code'] ?? 0; ?><br>
-                <strong>Total:</strong> <?php echo $media['total_copies'] ?? 0; ?><br>
-                <strong>Available:</strong> <?php echo $media['available_copies'] ?? 0; ?><br>
-                <strong>Loaned:</strong> <?php echo $media['loaned_copies'] ?? 0; ?>
-            </p>
-            <form method="POST">
-                <input type="hidden" name="media_id" value="<?php echo $media['id']; ?>">
-                <button type="submit" <?php echo ($media['available_copies'] == 0) ? 'disabled' : ''; ?>>
-                    <?php echo ($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media'; ?>
-                </button>
-            </form>
-        </div>
-    <?php endforeach; ?>
+
+        <?php
+        foreach ($mediaList as $media) {
+            echo '
+            <div class="card">
+                <h3>' . htmlspecialchars($media['title']) . '</h3>
+                ' . (
+                    (!empty($media['image_url']))
+                    ? '<img src="'.htmlspecialchars($media['image_url']).'" class="media-image">'
+                    : ''
+                ) . '
+                <p><strong>Author/Director:</strong> ' . htmlspecialchars($media['author']) . '</p>
+                <p><strong>Type:</strong> ' . htmlspecialchars($media['media_type']) . '</p>
+                <p>' . nl2br(htmlspecialchars($media['description'])) . '</p>
+                <p>
+                ' . (
+                    $media['media_type'] !== 'film'
+                    ? "<strong>ISBN: </strong>" . htmlspecialchars($media['isbn'] ?? 'N/A') . "<br>"
+                    : "<strong>ISAN: </strong>" . htmlspecialchars($media['isan'] ?? 'N/A') . "<br>"
+                ) . '
+                    <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
+                    <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
+                    <strong>Available:</strong> ' . ($media['available_copies'] ?? 0) . '<br>
+                    <strong>Loaned:</strong> ' . ($media['loaned_copies'] ?? 0) . '
+                </p>
+                <form method="POST">
+                    <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                    <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                        ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                    </button>
+                </form>
+            </div>
+            ';
+        }
+        ?>
     </div>
 
     <!-- My Loans View -->
