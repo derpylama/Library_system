@@ -1,8 +1,15 @@
 <?php
 
 function getImageSizeW(string $imageUrl): ?array {
+    if (empty($imageUrl)) {
+        return null;
+    }
     try {
-        return getimagesize($imageUrl);
+        $r = @getimagesize($imageUrl);
+        if ($r === false) {
+            return null;
+        }
+        return $r;
     } catch (Exception $e) {
         return null;
     }

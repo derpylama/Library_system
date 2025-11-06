@@ -242,6 +242,8 @@ if (isset($_SESSION['user_id'])) {
                 $imageSize = getImageSizeW($media['image_url']);
             }
 
+            $showsISBNorISAN = ($media['media_type'] !== 'film') ? isset($media['isbn']) : isset($media['isan']);
+
             echo '
             <div class="card" '.cardSize($imageSize).'>
                 <div class="media-title-container">
@@ -250,14 +252,22 @@ if (isset($_SESSION['user_id'])) {
                 <div class="media-image-container">
                 ' . imageType($media['image_url'], $imageSize) . '
                 </div>
+                <p class="description">' . nl2br($media['description']) . '</p>
                 <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
                 <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
-                <p>' . nl2br($media['description']) . '</p>
                 <p>
                 ' . (
                     $media['media_type'] !== 'film'
-                    ? "<strong>ISBN: </strong>" . ($media['isbn'] ?? 'N/A') . "<br>"
-                    : "<strong>ISAN: </strong>" . ($media['isan'] ?? 'N/A') . "<br>"
+                    ? (
+                        isset($media['isbn'])
+                        ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
+                        : ""
+                    )
+                    : (
+                        isset($media['isan'])
+                        ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
+                        : ""
+                    )
                 ) . '
                     <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
                     <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
@@ -278,6 +288,15 @@ if (isset($_SESSION['user_id'])) {
                 }
 
             echo '    
+                    <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
+                </p>
+                ' . ($showsISBNorISAN ? '' : '<br>') . '
+                <form method="POST">
+                    <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                    <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                        ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                    </button>
+                </form>
             </div>
             ';
         }

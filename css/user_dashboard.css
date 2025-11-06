@@ -36,11 +36,27 @@ button:disabled {
 }
 .card {
     background: white;
+    max-width: 25rem;
     padding: 1rem;
     padding-top: 0.6rem;
     border-radius: 0.5rem;
     box-shadow: 0 2px 6px var(--card-box-shadow-color);
 }
+
+.card > p {
+    margin: 0;
+    line-height: 1.2;
+}
+
+.card .description {
+    margin-bottom: 0.4rem;
+    margin-top: 0.6rem;
+}
+
+.card > form:last-child, .card > button:last-child {
+    margin-top: 0.9rem;
+}
+
 .message {
     margin-top: 1rem;
     background: #e6ffe6;
@@ -69,9 +85,10 @@ button:disabled {
 .media-title-container {
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 4rem;
-    overflow: hidden;
+    margin: 2rem 0;
+    align-items: start;
+    height: 3rem;
+    overflow: overlay;
 }
 
 .media-image {
