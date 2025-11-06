@@ -1,7 +1,7 @@
 <?php
 require_once('php/db.php');
 require_once('php/search.php');
-require_once('php/image_controller.php');
+require_once('php/images.php');
 
 session_start();
 
