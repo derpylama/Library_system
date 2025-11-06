@@ -146,9 +146,11 @@ function getRecommendations(
     return $recommendations;
 }
 
-// ✅ Example usage
+/* // ✅ Example usage
 $recommendations = getRecommendations($pdo, 2, 50, 10, true, 0.7);
 foreach ($recommendations as $id) {
     echo "Media ID: $id<br>";
 }
+ */
+
 ?>
