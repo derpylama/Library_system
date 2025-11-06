@@ -178,6 +178,24 @@ if (isset($_SESSION['user_id'])) {
     <div class="search-bar">
         <form method="GET" action="index.php">
             <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+            <select name="typefilter">
+                
+                <!--
+                <option value="all">All Types</option>
+                <option value="book">Books</option>
+                <option value="audiobook">Audiobooks</option>
+                <option value="film">Films</option>
+                -->
+
+                <?php
+                // Select if $_GET typefilter is set
+                $typefilter = isset($_GET['typefilter']) ? $_GET['typefilter'] : 'all';
+                echo '<option value="all"' . ($typefilter === 'all' ? ' selected' : '') . '>All Types</option>';
+                echo '<option value="bok"' . ($typefilter === 'bok' ? ' selected' : '') . '>Books</option>';
+                echo '<option value="ljudbok"' . ($typefilter === 'ljudbok' ? ' selected' : '') . '>Audiobooks</option>';
+                echo '<option value="film"' . ($typefilter === 'film' ? ' selected' : '') . '>Films</option>';
+                ?>
+            </select>
             <button type="submit">Search</button>
         </form>
     </div>
@@ -233,6 +251,13 @@ if (isset($_SESSION['user_id'])) {
 
                 if (!$foundInSearch) {
                     continue; // Skip this media, no matches found
+                }
+            }
+
+            // If $_GET typefilter is set filter by media type
+            if (isset($_GET['typefilter']) && $_GET['typefilter'] !== 'all') {
+                if ($media['media_type'] !== $_GET['typefilter']) {
+                    continue; // Skip this media, type does not match filter
                 }
             }
 
