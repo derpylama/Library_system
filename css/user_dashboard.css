@@ -41,6 +41,21 @@ button:disabled {
     border-radius: 0.5rem;
     box-shadow: 0 2px 6px var(--card-box-shadow-color);
 }
+
+.card > p {
+    margin: 0;
+    line-height: 1.2;
+}
+
+.card .description {
+    margin-bottom: 0.4rem;
+    margin-top: 0.6rem;
+}
+
+.card > form:last-child, .card > button:last-child {
+    margin-top: 0.9rem;
+}
+
 .message {
     margin-top: 1rem;
     background: #e6ffe6;
