@@ -108,3 +108,15 @@ button:disabled {
     background-color: #fff;
     display: block;
 }
+
+.card :last-child:disabled {
+    cursor: not-allowed;
+}
+
+#top-menu-message {
+    margin-top: 1rem;
+    background: #ff4141;
+    border: 1px solid #ff4141;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+}

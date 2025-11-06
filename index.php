@@ -5,12 +5,6 @@ require_once('php/images.php');
 
 session_start();
 
-// Redirect to login if not logged in
-// if (!isset($_SESSION['user_id'])) {
-//     header('Location: index.php');
-//     exit;
-// }
-
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
     $username = $_SESSION['username'];
@@ -22,22 +16,15 @@ if (isset($_SESSION['user_id'])) {
     $isAdmin = $user && $user['is_admin'] == 1;
     
     $message = "";
-}
-
-// Handle loan creation
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['media_id'])) {
-
-    if(!isset($_SESSION['user_id'])) {
-        header('Location: login.php');
-        exit;
-
-    }else{
-
+    
+    // Handle loan creation
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['media_id'])) {
+    
         $mediaId = (int)$_POST['media_id'];
         $stmt = $pdo->prepare("SELECT id FROM copy WHERE media_id = ? AND status = 'available' LIMIT 1");
         $stmt->execute([$mediaId]);
         $copy = $stmt->fetch(PDO::FETCH_ASSOC);
-
+    
         if ($copy) {
             $copyId = $copy['id'];
             $loanDate = date('Y-m-d');
@@ -56,32 +43,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['media_id'])) {
         } else {
             $message = "No available copies for this media.";
         }
+    
+    
     }
-
-}
-
-
-// Handle returning a loan
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_loan_id'])) {
-    $loanId = (int)$_POST['return_loan_id'];
-    $pdo->beginTransaction();
-    try {
-        $loanStmt = $pdo->prepare("SELECT * FROM loan WHERE id = ? AND user_id = ?");
-        $loanStmt->execute([$loanId, $_SESSION['user_id']]);
-        $loan = $loanStmt->fetch();
-        if ($loan && $loan['status'] === 'active') {
-            $pdo->prepare("UPDATE loan SET status = 'returned', return_date = CURDATE() WHERE id = ?")->execute([$loanId]);
-            $pdo->prepare("UPDATE copy SET status = 'available' WHERE id = ?")->execute([$loan['copy_id']]);
-            $message = "Returned loan #$loanId successfully.";
-        } else {
-            $message = "Loan not found or already returned.";
+    // Handle returning a loan
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['return_loan_id'])) {
+        $loanId = (int)$_POST['return_loan_id'];
+        $pdo->beginTransaction();
+        try {
+            $loanStmt = $pdo->prepare("SELECT * FROM loan WHERE id = ? AND user_id = ?");
+            $loanStmt->execute([$loanId, $_SESSION['user_id']]);
+            $loan = $loanStmt->fetch();
+            if ($loan && $loan['status'] === 'active') {
+                $pdo->prepare("UPDATE loan SET status = 'returned', return_date = CURDATE() WHERE id = ?")->execute([$loanId]);
+                $pdo->prepare("UPDATE copy SET status = 'available' WHERE id = ?")->execute([$loan['copy_id']]);
+                $message = "Returned loan #$loanId successfully.";
+            } else {
+                $message = "Loan not found or already returned.";
+            }
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $message = "Error returning loan: " . $e->getMessage();
         }
-        $pdo->commit();
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        $message = "Error returning loan: " . $e->getMessage();
     }
 }
+
+
 
 // Fetch all media
 $mediaQuery = "
@@ -152,6 +140,7 @@ if (isset($_SESSION['user_id'])) {
                 echo "<h2>Welcome</h2>";
             }
         ?>
+        <p id="top-menu-message" style="display: none;"></p>
 
         <div>
             <?php
@@ -274,13 +263,21 @@ if (isset($_SESSION['user_id'])) {
                     <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
                     <strong>Available:</strong> ' . ($media['available_copies'] ?? 0) . '<br>
                     <strong>Loaned:</strong> ' . ($media['loaned_copies'] ?? 0) . '
-                </p>
-                <form method="POST">
-                    <input type="hidden" name="media_id" value="' . $media['id'] . '">
-                    <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
-                        ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
-                    </button>
-                </form>
+                </p>';
+                    
+                if (isset($_SESSION['user_id'])) {
+                    echo '
+                    <form method="POST">
+                        <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                        <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                            ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                        </button>
+                    </form>';
+                }else{
+                    echo '<button class="media-loan-button" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '</button>';
+                }
+
+            echo '    
             </div>
             ';
         }
