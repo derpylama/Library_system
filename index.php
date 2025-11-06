@@ -224,6 +224,8 @@ if (isset($_SESSION['user_id'])) {
                                     $after = htmlspecialchars(mb_substr($value, $start + $length));
                                     $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
                                     $media[$field] = $value;
+
+                                    // Mark as found
                                     $foundField = true;
                                     $foundInSearch = true;
                                 }
