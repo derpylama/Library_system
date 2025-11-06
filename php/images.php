@@ -53,6 +53,6 @@ function imageType(string $imageUrl, ?array $imageSize, string $imageAlt = "Medi
     }
 
     // Return
-    return '<img src="' . $imageSrc . '" class="' . $imageClass . '" alt="' . htmlspecialchars($imageAlt) . '"' . ($lazy ? ' loading="lazy"' : '') . '>';
+    return '<img src="' . $imageSrc . '" class="media-image ' . $imageClass . '" alt="' . htmlspecialchars($imageAlt) . '"' . ($lazy ? ' loading="lazy"' : '') . '>';
             
 }

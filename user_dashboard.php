@@ -218,7 +218,11 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($filteredMediaList as $mediaWithScore) {
             $media = $mediaWithScore[1];
 
-            $imageSize = getImageSizeW($media['image_url']);
+            if (isset($media["image_width"]) && isset($media["image_height"])) {
+                $imageSize = [intval($media["image_width"]), intval($media["image_height"])];
+            } else {
+                $imageSize = getImageSizeW($media['image_url']);
+            }
 
             echo '
             <div class="card" ' . cardSize($imageSize) . '>

@@ -28,6 +28,8 @@ CREATE TABLE media (
     author VARCHAR(255) DEFAULT NULL,
     media_type ENUM('bok', 'ljudbok', 'film') NOT NULL,
     image_url MEDIUMTEXT DEFAULT NULL,
+    image_width INT(11) DEFAULT 1, -- Only used for portrait/landscape/square detection
+    image_height INT(11) DEFAULT 2, -- Only used for portrait/landscape/square detection
     sab_code VARCHAR(150) DEFAULT NULL,
     description TEXT DEFAULT NULL,
     price DECIMAL(10,2) DEFAULT 0.00,

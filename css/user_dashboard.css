@@ -71,6 +71,11 @@ button:disabled {
     overflow: hidden;
 }
 
+.media-image {
+    max-width: 100%;
+    max-height: 100%;
+}
+
 .media-image-container {
     display: flex;
     justify-content: center;
