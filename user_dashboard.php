@@ -129,7 +129,7 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="js/user_dashboard.js"></script>
 </head>
 <body>
-    <div class="header">
+    <header>
         <h2>Welcome, <?php echo htmlspecialchars($username); ?></h2>
         <div>
             <button class="toggle-btn nav-button" onclick="toggleView('media')">All Media</button>
@@ -139,7 +139,7 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
             <?php endif; ?>
             <a href="logout.php" class="toggle-btn logout-button">Logout</a>
         </div>
-    </div>
+    </header>
 
     <?php if ($message): ?>
     <div class="message"><?php echo htmlspecialchars($message); ?></div>

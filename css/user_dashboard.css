@@ -1,13 +1,10 @@
-body {
-    padding: 20px;
-}
 h3 {
     display: flex;
     justify-content: center;
     margin-bottom: 0;
     margin-top: 0;
 }
-.header {
+header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -16,12 +13,14 @@ button, .toggle-btn {
     background-color: var(--button-color);
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 0.5rem 0.75rem;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: none;
 }
 .toggle-btn {
-    margin-left: 10px;
+    margin-left: 0.625rem;
 }
 button:disabled {
     background-color: var(--button-disabled-color);
@@ -34,16 +33,17 @@ button:disabled {
 }
 .card {
     background: white;
-    padding: 15px;
-    border-radius: 8px;
+    padding: 1rem;
+    padding-top: 0.6rem;
+    border-radius: 0.5rem;
     box-shadow: 0 2px 6px var(--card-box-shadow-color);
 }
 .message {
-    margin-top: 15px;
+    margin-top: 1rem;
     background: #e6ffe6;
     border: 1px solid #b3ddb3;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
 }
 .overdue {
     color: red;
@@ -53,10 +53,10 @@ button:disabled {
     color: green;
 }
 .invoice {
-    margin-top: 20px;
+    margin-top: 2rem;
     background: #fff7f7;
-    padding: 10px;
-    border-radius: 6px;
+    padding: 1rem;
+    border-radius: 0.5rem;
     border: 1px solid #ffcccc;
 }
 .hidden { display: none; }
@@ -67,12 +67,12 @@ button:disabled {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 40px;
+    height: 4rem;
     overflow: hidden;
 }
 
 .media-image {
-    max-width: 100%;
+    max-width: calc(100%);
     max-height: 100%;
 }
 

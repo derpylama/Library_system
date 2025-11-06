@@ -16,7 +16,7 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-    <div class="container">
+    <main>
         <h2 id="form-title">Login</h2>
 
         <?php if(isset($_GET['registered'])) echo '<p style="color:green;">Registration successful! You can now log in.</p>'; ?>
@@ -31,7 +31,7 @@ if (isset($_SESSION['user_id'])) {
         <div class="toggle">
             <p id="toggle-text"><a href="#" onclick="toggleForm()">Create account</a></p>
         </div>
-    </div>
+    </main>
 
     <script src="./js/index.js"></script>
 </body>
