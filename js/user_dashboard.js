@@ -49,12 +49,24 @@ document.addEventListener('DOMContentLoaded', function() {
         allMediaButton.style.display = "inline-block";
     }
 
-
     document.getElementById('media-view').addEventListener('click', function() {
         toggleView('media');
     });
 
     document.getElementById('loans-view').addEventListener('click', function() {
         toggleView('loans');
+    });
+
+    var mediaLoanButtons = document.querySelectorAll(".media-loan-button");
+
+    mediaLoanButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            window.scrollTo(0, 0);
+
+            var messageText = document.getElementById('top-menu-message');
+            messageText.style.display = "block";
+            messageText.innerText = "You need to be logged in to be able to loan media";
+
+        });
     });
 })
