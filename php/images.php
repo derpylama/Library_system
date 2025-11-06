@@ -1,6 +1,6 @@
 <?php
 
-function getImageSizeW(string $imageUrl) {
+function getImageSizeW(string $imageUrl): ?array {
     try {
         return getimagesize($imageUrl);
     } catch (Exception $e) {
@@ -8,7 +8,7 @@ function getImageSizeW(string $imageUrl) {
     }
 }
 
-function cardSize($imageSize) {
+function cardSize(?array $imageSize): string {
     $style = '';
 
     if ($imageSize && $imageSize !== null && $imageSize !== false) {
@@ -29,25 +29,30 @@ function cardSize($imageSize) {
     return $style;
 }
 
-function imageType($imageUrl, $imageSize) {
+function imageType(string $imageUrl, ?array $imageSize, string $imageAlt = "Media Image", bool $lazy = true, string $missingImagePath = "./assets/missing_cover.png"): string {
+
+    $imageSrc = $missingImagePath;
+    $imageClass = "media-image-landscape";
 
     // if image_url is empty or returns error, show placeholder image
-    if (empty($imageUrl) || ($imageSize === null || $imageSize === false)) {
-        return '<img src="images/missing_cover.png" class="media-image-layling">';
-        
-    } else {
+    if (!empty($imageUrl) && $imageSize !== null && $imageSize !== false) {
         if ($imageSize !== null && $imageSize !== false) {
             $width = $imageSize[0];
             $height = $imageSize[1];
 
-            if ($width / $height > 1.2) {// esle image missing_cover.png as placeholder
-                return !empty($imageUrl) ? '<img src="'.htmlspecialchars($imageUrl).'" class="media-image-layling">' : '' ;
+            $imageSrc = htmlspecialchars($imageUrl);
+
+            if ($width / $height > 1.2) {
+                // Already set to layling
             } elseif ($height === $width) {
-                return !empty($imageUrl) ? '<img src="'.htmlspecialchars($imageUrl).'" class="media-image-square">' : '' ;
+                $imageClass = "media-image-square";
             } else {
-                return !empty($imageUrl) ? '<img src="'.htmlspecialchars($imageUrl).'" class="media-image">' : '' ;
+                $imageClass = "media-image-portrait"; // portrait
             }
         }
     }
+
+    // Return
+    return '<img src="' . $imageSrc . '" class="' . $imageClass . '" alt="' . htmlspecialchars($imageAlt) . '"' . ($lazy ? ' loading="lazy"' : '') . '>';
             
 }
