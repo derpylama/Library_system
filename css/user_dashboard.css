@@ -26,8 +26,11 @@ button:disabled {
     background-color: var(--button-disabled-color);
 }
 .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    /* display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); */
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
     gap: 20px;
     margin-top: 20px;
 }
