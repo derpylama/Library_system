@@ -29,6 +29,7 @@ button:disabled {
     /* display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); */
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
     flex-direction: row;
     gap: 20px;
@@ -51,6 +52,8 @@ button:disabled {
 .card .description {
     margin-bottom: 0.4rem;
     margin-top: 0.6rem;
+    overflow: auto;
+    height: 2rem;
 }
 
 .card > form:last-child, .card > button:last-child {

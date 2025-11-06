@@ -2,6 +2,7 @@
 require_once('php/db.php');
 require_once('php/search.php');
 require_once('php/images.php');
+require_once('php/account.php');
 
 session_start();
 
@@ -332,6 +333,7 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- My Loans View -->
     <div id="loans-view" class="hidden">
+    <?=showAccountButton();?>
     <h3>My Loans</h3>
     <?php if (empty($userLoans)): ?>
         <p>You currently have no loans.</p>
