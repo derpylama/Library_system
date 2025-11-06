@@ -249,7 +249,7 @@ $loans = $pdo->query("
         <button id="media-btn" class="nav-button" onclick="showTab('media')">Media</button>
         <button id="copies-btn" class="nav-button" onclick="showTab('copies')">Copies</button>
         <button id="loans-btn" class="nav-button" onclick="showTab('loans')">Loans</button>
-        <a href="user_dashboard.php" class="back action-button">← Back to User view</a>
+        <a href="index.php" class="back action-button">← Back to User view</a>
     </nav>
 
     <?php if ($message): ?>
