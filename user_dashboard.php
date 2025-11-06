@@ -217,13 +217,16 @@ $invoices = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($filteredMediaList as $mediaWithScore) {
             $media = $mediaWithScore[1];
+
+            $imageSize = getImageSizeW($media['image_url']);
+
             echo '
-            <div class="card" '.cardSize($media['image_url']).'>
+            <div class="card" ' . cardSize($imageSize) . '>
                 <div class="media-title-container">
                     <h3>' . $media['title'] . '</h3>
                 </div>
                 <div class="media-image-container">
-                '.imageType($media['image_url']).'
+                ' . imageType($media['image_url'], $imageSize) . '
                 </div>
                 <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
                 <p><strong>Type:</strong> ' . $media['media_type'] . '</p>

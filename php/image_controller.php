@@ -1,33 +1,45 @@
 <?php
 
-function cardSize($imageUrl) {
-    if ($imageUrl && @getimagesize($imageUrl)) {
-        $imagesize = getimagesize($imageUrl);
-        if ($imagesize) {
-            $width = $imagesize[0];
-            $height = $imagesize[1];
+function getImageSizeW(string $imageUrl) {
+    try {
+        return getimagesize($imageUrl);
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+function cardSize($imageSize) {
+    $style = '';
+
+    if ($imageSize && $imageSize !== null && $imageSize !== false) {
+
+        if ($imageSize && $imageSize !== null) {
+            $width = $imageSize[0];
+            $height = $imageSize[1];
     
             if ($width / $height > 1.2 || $height === $width) {
                 $style = 'style="height: fit-content;"';
             }
         }
-    } elseif (empty($imageUrl) || !@getimagesize($imageUrl)) {
+
+    } else {
         $style = 'style="height: fit-content;"';
     }
-    return $style ?? '';
+
+    return $style;
 }
 
-function imageType($imageUrl) {
+function imageType($imageUrl, $imageSize) {
 
     // if image_url is empty or returns error, show placeholder image
-    if (empty($imageUrl) || !@getimagesize($imageUrl)) {
+    if (empty($imageUrl) || ($imageSize === null || $imageSize === false)) {
         return '<img src="images/missing_cover.png" class="media-image-layling">';
         
     } else {
-        $imagesize = getimagesize($imageUrl ?? '');
-        if ($imagesize) {
-            $width = $imagesize[0];
-            $height = $imagesize[1];
+        if ($imageSize !== null && $imageSize !== false) {
+            $width = $imageSize[0];
+            $height = $imageSize[1];
+
             if ($width / $height > 1.2) {// esle image missing_cover.png as placeholder
                 return !empty($imageUrl) ? '<img src="'.htmlspecialchars($imageUrl).'" class="media-image-layling">' : '' ;
             } elseif ($height === $width) {
