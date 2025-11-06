@@ -1,6 +1,7 @@
 <?php
 require_once('php/db.php');
 require_once('php/barcode.php');
+require_once('php/images.php');
 
 session_start();
 
@@ -28,7 +29,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $isbn = trim($_POST['isbn']);
     $isan = trim($_POST['isan']);
     $title = trim($_POST['title']);
-    $image = $_POST['image'] ?? null;
+
+    // Images are {image_url, image_width, image_height} width+height is only used for portrait/landscape/square detection so default is 1x2 (portrait), image === null means missing image
+    $image_url = $_POST['image'] ?? null;
+    if ($image_url !== null) {
+        $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
+        $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
+
+        if ($image_width === null || $image_height === null) {
+            $imageSize = getImageSizeW($image_url);
+            if ($imageSize !== null && $imageSize !== false) {
+                $image_width = $imageSize[0];
+                $image_height = $imageSize[1];
+            } else {
+                $image_width = 1;
+                $image_height = 2;
+            }
+        }
+    } else {
+        $image_width = 1;
+        $image_height = 2;
+    }
+
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
     
@@ -48,15 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $barcode = generateBarcode($title, $allBarcodes);
 
 
-    $stmt = $pdo->prepare("INSERT INTO media (isbn, isan, barcode, title, author, media_type, image_url, sab_code, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$isbn, $isan, $barcode, $title, $author, $type, $image, $sabcode, $desc, $price]);
+    $stmt = $pdo->prepare("INSERT INTO media (isbn, isan, barcode, title, author, media_type, image_url, image_width, image_height, sab_code, description, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$isbn, $isan, $barcode, $title, $author, $type, $image_url, $image_width, $image_height, $sabcode, $desc, $price]);
     $message = "Media added successfully.";
 }
 
 // Add copy
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_copy'])) {
     $mediaId = (int)$_POST['media_id'];
-  //  $barcode = trim($_POST['barcode']);//changed barcode to auto generate
+    //$barcode = trim($_POST['barcode']);//changed barcode to auto generate
     $amountOfCopies = (int)($_POST['amount'] ?? 1); //defualt 1 copy
 
     $stmt = $pdo->prepare("SELECT barcode FROM copy WHERE media_id = :media_id");
@@ -126,7 +148,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $type = $_POST['media_type'];
-    $image = $_POST['image'] ?? null;
+
+    // Images are {image_url, image_width, image_height} width+height is only used for portrait/landscape/square detection so default is 1x2 (portrait), image === null means missing image
+    $image_url = $_POST['image'] ?? null;
+    if ($image_url !== null) {
+        $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
+        $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
+
+        if ($image_width === null || $image_height === null) {
+            $imageSize = getImageSizeW($image_url);
+            if ($imageSize !== null && $imageSize !== false) {
+                $image_width = $imageSize[0];
+                $image_height = $imageSize[1];
+            } else {
+                $image_width = 1;
+                $image_height = 2;
+            }
+        }
+    } else {
+        $image_width = 1;
+        $image_height = 2;
+    }
         
     // Remove any hyphens from ISBN and ISAN
     $isbn = str_replace('-', '', $isbn);
@@ -140,8 +182,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
     $desc = trim($_POST['description']);
     $price = (float)$_POST['price'];
 
-    $stmt = $pdo->prepare("UPDATE media SET isbn=?, isan=?, title=?, author=?, media_type=?, image_url=?, sab_code=?, description=?, price=?, updated_at=NOW() WHERE id=?");
-    $stmt->execute([$isbn, $isan, $title, $author, $type, $image, $sabcode, $desc, $price, $id]);
+    $stmt = $pdo->prepare("UPDATE media SET isbn=?, isan=?, title=?, author=?, media_type=?, image_url=?, image_width=?, image_height=?, sab_code=?, description=?, price=?, updated_at=NOW() WHERE id=?");
+    $stmt->execute([$isbn, $isan, $title, $author, $type, $image_url, $image_width, $image_height, $sabcode, $desc, $price, $id]);
     $message = "Media ID $id updated.";
 }
 
