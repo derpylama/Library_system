@@ -469,7 +469,7 @@ $loans = $pdo->query("
 
             <table>
                 <tr>
-                    <th>Media ID</th>
+                    <th>Media</th>
                     <th>Barcode</th>
                     <th>Status</th>
                     <th>Actions</th>
