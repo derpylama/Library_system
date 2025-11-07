@@ -199,122 +199,111 @@ if (isset($_SESSION['user_id'])) {
 
             $totalScore = 0;
 
-            $matchesByField = [];
+            // Iterate each field, does it exists as a match in a search result? If so highlight the matching part
+            //   also keep track if this media had any matches at all in search results if not and search result is not empty skip it
+            // $searchResults = [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
             if (count($searchResults) > 0) {
-                foreach ($searchResults as $result) {
-                    if ($result['mediaId'] == $media['id']) {
-                        foreach ($result['matches'] as $match) {
-                            $fieldName = $match['field'];
-                            $matchesByField[$fieldName][] = $match;
-                            $totalScore += $match['score'];
-                        }
-                    }
-                }
+                $foundInSearch = false;
 
-                if (empty($matchesByField)) {
-                    continue; // Skip this media, no matches found
-                }
-            }
-
-            foreach ($media as $field => $value) {
-                $stringValue = (string)$value;
-                $stringLength = mb_strlen($stringValue, 'UTF-8');
-
-                if (isset($matchesByField[$field]) && !empty($matchesByField[$field])) {
-
-                    // Process matches to create highlight ranges
-                    $ranges = [];
-                    foreach ($matchesByField[$field] as $match) {
-                        $index = max(0, (int)$match['index']);
-                        $length = max(0, (int)$match['length']);
-                        if ($length === 0) {
-                            continue;
-                        }
-
-                        $charStart = mb_strlen(mb_strcut($stringValue, 0, $index, 'UTF-8'), 'UTF-8');
-                        if ($charStart >= $stringLength) {
-                            continue;
-                        }
-
-                        $charEnd = min($stringLength, $charStart + $length);
-                        if ($charEnd <= $charStart) {
-                            continue;
-                        }
-
-                        $ranges[] = [
-                            'start' => $charStart,
-                            'end' => $charEnd,
-                        ];
-                    }
-
-                    // Merge overlapping ranges
-                    if (!empty($ranges)) {
-                        // Sort by index
-                        usort($ranges, function ($a, $b) {
-                            if ($a['start'] === $b['start']) {
-                                return ($b['end'] <=> $a['end']); // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
-                            }
-                            return $a['start'] <=> $b['start']; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
-                        });
-
-                        // Merge
-                        $merged = [];
-                        foreach ($ranges as $range) {
-                            // If merged is empty, add the first range
-                            if (empty($merged)) {
-                                $merged[] = $range;
-                                continue;
-                            }
-
-                            $lastIndex = count($merged) - 1;
-                            $lastRange = $merged[$lastIndex];
-
-                            if ($range['start'] <= $lastRange['end']) {
-                                $merged[$lastIndex]['end'] = max($lastRange['end'], $range['end']);
-                            } else {
-                                $merged[] = $range;
+                foreach ($media as $field => $value) {
+                    $foundField = false;
+                    $matchesForField = [];
+                
+                    // Collect all matches for this field & media
+                    foreach ($searchResults as $result) {
+                        if ($result['mediaId'] == $media['id']) {
+                            foreach ($result['matches'] as $match) {
+                                if ($match['field'] === $field) {
+                                    $matchesForField[] = $match;
+                                    $totalScore += $match['score'];
+                                }
                             }
                         }
-
-                        // Build highlighted string
-                        $highlighted = '';
-                        $currIndex = 0;
-                        foreach ($merged as $mergedRange) {
-                            // If there is a gap, htmlescape the segment
-                            if ($mergedRange['start'] > $currIndex) {
-                                $segmentLength = $mergedRange['start'] - $currIndex;
-                                $segment = mb_substr($stringValue, $currIndex, $segmentLength);
-                                $escapedSegment = htmlspecialchars($segment, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                                $highlighted .= str_replace(' ', '&nbsp;', $escapedSegment);
-                            }
-
-                            // Highlight segment
-                            $highlightLength = $mergedRange['end'] - $mergedRange['start'];
-                            $highlightText = mb_substr($stringValue, $mergedRange['start'], $highlightLength);
-                            $highlighted .= '<span class="search-highlight">' . htmlspecialchars($highlightText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
-                            $currIndex = $mergedRange['end'];
-                        }
-
-                        // Append any remaining text after last highlight htmlescaped
-                        if ($currIndex < $stringLength) {
-                            $tail = mb_substr($stringValue, $currIndex);
-                            $escapedTail = htmlspecialchars($tail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                            $highlighted .= str_replace(' ', '&nbsp;', $escapedTail);
-                        }
-
-                        // Replace value
-                        $media[$field] = $highlighted;
-
-                    // If no valid ranges, htmlescape full string
-                    } else {
-                        $escapedFull = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                        $media[$field] = str_replace(' ', '&nbsp;', $escapedFull);
                     }
                 
-                // If no matches for this field, htmlescape full string
-                } else {
-                    $escapedNoMatch = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                    $media[$field] = str_replace(' ', '&nbsp;', $escapedNoMatch);
+                    if (empty($matchesForField)) {
+                        // No matches: escape entire field including spaces
+                        $media[$field] = str_replace(' ', '&nbsp;', htmlspecialchars($value));
+                        continue;
+                    }
+                
+                    // --- Normalize matches ---
+                    foreach ($matchesForField as &$match) {
+                        $segment = mb_substr($value, $match['index'], $match['length']);
+                        $token = $match['token'] ?? '';
+                
+                        // If token doesn't include spaces, trim them in match
+                        if (mb_strpos($token, ' ') === false) {
+                            $trimmed = trim($segment);
+                            if ($trimmed !== $segment) {
+                                $leadingSpaces = mb_strlen($segment) - mb_strlen(ltrim($segment));
+                                $trailingSpaces = mb_strlen($segment) - mb_strlen(rtrim($segment));
+                
+                                $match['index'] += $leadingSpaces;
+                                $match['length'] -= ($leadingSpaces + $trailingSpaces);
+                            }
+                        }
+                    }
+                    unset($match);
+                
+                    // Sort matches by index ascending
+                    usort($matchesForField, function ($a, $b) {
+                        return $a['index'] <=> $b['index'];
+                    });
+                
+                    // Merge overlapping or adjacent matches
+                    $merged = [];
+                    foreach ($matchesForField as $match) {
+                        $start = $match['index'];
+                        $end = $start + $match['length'];
+                
+                        if (empty($merged)) {
+                            $merged[] = ['start' => $start, 'end' => $end];
+                            continue;
+                        }
+                
+                        $last = &$merged[count($merged) - 1];
+                        if ($start <= $last['end']) {
+                            $last['end'] = max($last['end'], $end);
+                        } else {
+                            $merged[] = ['start' => $start, 'end' => $end];
+                        }
+                    }
+                
+                    // Build output safely with HTML escaping for non-highlighted pieces
+                    $highlighted = '';
+                    $lastPos = 0;
+                
+                    foreach ($merged as $range) {
+                        $start = $range['start'];
+                        $end = $range['end'];
+                
+                        // Non-highlighted (escaped, with space-preserving &nbsp;)
+                        $normalText = mb_substr($value, $lastPos, $start - $lastPos);
+                        $highlighted .= str_replace(' ', '&nbsp;', htmlspecialchars($normalText));
+                
+                        // Highlighted text (escaped, but inside span)
+                        $matchText = mb_substr($value, $start, $end - $start);
+                        $highlighted .= '<span class="search-highlight">'
+                            . htmlspecialchars($matchText)
+                            . '</span>';
+                
+                        $lastPos = $end;
+                    }
+                
+                    // Trailing non-highlighted text
+                    $remaining = mb_substr($value, $lastPos);
+                    $highlighted .= str_replace(' ', '&nbsp;', htmlspecialchars($remaining));
+                
+                    $media[$field] = $highlighted;
+                    $foundInSearch = true;
+                    $foundField = true;
+                }
+                
+                
+
+                if (!$foundInSearch) {
+                    continue; // Skip this media, no matches found
                 }
             }
 
@@ -330,7 +319,7 @@ if (isset($_SESSION['user_id'])) {
 
         // Sort $filteredMediaList by score descending
         usort($filteredMediaList, function($a, $b) {
-            return $b[0] <=> $a[0]; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+            return $b[0] <=> $a[0];
         });
 
         foreach ($filteredMediaList as $mediaWithScore) {

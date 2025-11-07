@@ -221,46 +221,37 @@ if (isset($_SESSION['user_id'])) {
                 $stringLength = mb_strlen($stringValue, 'UTF-8');
 
                 if (isset($matchesByField[$field]) && !empty($matchesByField[$field])) {
-
-                    // Process matches to create highlight ranges
                     $ranges = [];
                     foreach ($matchesByField[$field] as $match) {
-                        $index = max(0, (int)$match['index']);
+                        $byteStart = max(0, (int)$match['index']);
                         $length = max(0, (int)$match['length']);
                         if ($length === 0) {
                             continue;
                         }
-
-                        $charStart = mb_strlen(mb_strcut($stringValue, 0, $index, 'UTF-8'), 'UTF-8');
+                        $charStart = mb_strlen(mb_strcut($stringValue, 0, $byteStart, 'UTF-8'), 'UTF-8');
                         if ($charStart >= $stringLength) {
                             continue;
                         }
-
                         $charEnd = min($stringLength, $charStart + $length);
                         if ($charEnd <= $charStart) {
                             continue;
                         }
-
                         $ranges[] = [
                             'start' => $charStart,
                             'end' => $charEnd,
                         ];
                     }
 
-                    // Merge overlapping ranges
                     if (!empty($ranges)) {
-                        // Sort by index
                         usort($ranges, function ($a, $b) {
                             if ($a['start'] === $b['start']) {
-                                return ($b['end'] <=> $a['end']); // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+                                return ($b['end'] <=> $a['end']);
                             }
-                            return $a['start'] <=> $b['start']; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+                            return $a['start'] <=> $b['start'];
                         });
 
-                        // Merge
                         $merged = [];
                         foreach ($ranges as $range) {
-                            // If merged is empty, add the first range
                             if (empty($merged)) {
                                 $merged[] = $range;
                                 continue;
@@ -276,42 +267,33 @@ if (isset($_SESSION['user_id'])) {
                             }
                         }
 
-                        // Build highlighted string
                         $highlighted = '';
-                        $currIndex = 0;
+                        $cursor = 0;
                         foreach ($merged as $mergedRange) {
-                            // If there is a gap, htmlescape the segment
-                            if ($mergedRange['start'] > $currIndex) {
-                                $segmentLength = $mergedRange['start'] - $currIndex;
-                                $segment = mb_substr($stringValue, $currIndex, $segmentLength);
+                            if ($mergedRange['start'] > $cursor) {
+                                $segmentLength = $mergedRange['start'] - $cursor;
+                                $segment = mb_substr($stringValue, $cursor, $segmentLength);
                                 $escapedSegment = htmlspecialchars($segment, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                                 $highlighted .= str_replace(' ', '&nbsp;', $escapedSegment);
                             }
 
-                            // Highlight segment
                             $highlightLength = $mergedRange['end'] - $mergedRange['start'];
                             $highlightText = mb_substr($stringValue, $mergedRange['start'], $highlightLength);
                             $highlighted .= '<span class="search-highlight">' . htmlspecialchars($highlightText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
-                            $currIndex = $mergedRange['end'];
+                            $cursor = $mergedRange['end'];
                         }
 
-                        // Append any remaining text after last highlight htmlescaped
-                        if ($currIndex < $stringLength) {
-                            $tail = mb_substr($stringValue, $currIndex);
+                        if ($cursor < $stringLength) {
+                            $tail = mb_substr($stringValue, $cursor);
                             $escapedTail = htmlspecialchars($tail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                             $highlighted .= str_replace(' ', '&nbsp;', $escapedTail);
                         }
 
-                        // Replace value
                         $media[$field] = $highlighted;
-
-                    // If no valid ranges, htmlescape full string
                     } else {
                         $escapedFull = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                         $media[$field] = str_replace(' ', '&nbsp;', $escapedFull);
                     }
-                
-                // If no matches for this field, htmlescape full string
                 } else {
                     $escapedNoMatch = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                     $media[$field] = str_replace(' ', '&nbsp;', $escapedNoMatch);
@@ -330,7 +312,7 @@ if (isset($_SESSION['user_id'])) {
 
         // Sort $filteredMediaList by score descending
         usort($filteredMediaList, function($a, $b) {
-            return $b[0] <=> $a[0]; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+            return $b[0] <=> $a[0];
         });
 
         foreach ($filteredMediaList as $mediaWithScore) {
