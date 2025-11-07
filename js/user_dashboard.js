@@ -1,16 +1,16 @@
 function toggleView(view) {
-    sessionStorage.setItem('currentView', view + '-view');
-    document.getElementById('media-view').classList.add('hidden');
-    document.getElementById('loans-view').classList.add('hidden');
-    document.getElementById(view + '-view').classList.remove('hidden');
+    sessionStorage.setItem('currentView', view);
+    document.getElementById('all-media-view').classList.add('hidden');
+    document.getElementById('my-account-view').classList.add('hidden');
+    document.getElementById(view).classList.remove('hidden');
 
-    const savedView = sessionStorage.getItem('currentView') || 'media-view';
+    const savedView = sessionStorage.getItem('currentView') || 'all-media-view';
 
     var allMediaButton = document.getElementById("all-media-button");
     
     var myAccountButton = document.getElementById("my-account-button");
     if (myAccountButton !== null) {
-        if (savedView === 'loans-view') {
+        if (savedView === 'my-account-view') {
             myAccountButton.style.display = "none";
         }
         else{
@@ -18,7 +18,7 @@ function toggleView(view) {
         }
     }    
 
-    if (savedView === 'media-view') {
+    if (savedView === 'all-media-view') {
         allMediaButton.style.display = "none";
     }
     else{
@@ -27,14 +27,14 @@ function toggleView(view) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const savedView = sessionStorage.getItem('currentView') || 'media-view';
-    toggleView(savedView.replace('-view', ''));
+    const savedView = sessionStorage.getItem('currentView') || 'all-media-view';
+    toggleView(savedView);
 
     var allMediaButton = document.getElementById("all-media-button");
     var myAccountButton = document.getElementById("my-account-button");
 
     if (myAccountButton !== null) {
-        if (savedView === 'loans-view') {
+        if (savedView === 'my-account-view') {
             myAccountButton.style.display = "none";
         }
         else{
@@ -42,19 +42,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }  
 
-    if (savedView === 'media-view') {
+    if (savedView === 'all-media-view') {
         allMediaButton.style.display = "none";
     }
     else{
         allMediaButton.style.display = "inline-block";
     }
 
-    document.getElementById('media-view').addEventListener('click', function() {
-        toggleView('media');
+    document.getElementById('all-media-view').addEventListener('click', function() {
+        toggleView('all-media-view');
     });
 
-    document.getElementById('loans-view').addEventListener('click', function() {
-        toggleView('loans');
+    document.getElementById('my-account-view').addEventListener('click', function() {
+        toggleView('my-account-view');
     });
 
     var mediaLoanButtons = document.querySelectorAll(".media-loan-button");
