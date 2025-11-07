@@ -114,11 +114,42 @@ input[name="q"]:focus, input[name="q"]:active {
     padding: 1rem;
     border-radius: 0.5rem;
     box-shadow: 0 4px 8px var(--card-box-shadow-color);
-
+    max-width: 50rem;
     /* enable interaction with popup */
     pointer-events: auto;
 }
 
 body:has(.popup:not(.hidden)) {
     overflow: hidden;
+}
+
+.close-button {
+    background-color: var(--button-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+.close-button:hover {
+    background-color: var(--button-selected-color);
+}
+.confirm-delete-button {
+    background-color: var(--logout-button-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+.confirm-delete-button:hover {
+    background-color: var(--logout-button-hover-color);
+}
+
+.popup-buttons-container {
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: row;
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
