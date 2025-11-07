@@ -5,6 +5,8 @@ require_once('php/images.php');
 require_once('php/account.php');
 require_once('php/popup.php');
 
+$COLLAPSE_CARD_DETAILS = false;
+
 @session_start();
 
 if (isset($_SESSION['user_id'])) {
@@ -179,12 +181,11 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- All Media View -->
     <section id="all-media-view">
-
         <!-- search bar -->
         <div class="search-bar">
             <form method="GET" action="index.php">
                 <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
-                <select name="typefilter">
+                <select name="typefilter", id="typefilter">
                     
                     <!--
                     <option value="all">All Types</option>
@@ -214,66 +215,122 @@ if (isset($_SESSION['user_id'])) {
 
                 $totalScore = 0;
 
-                // Iterate each field, does it exists as a match in a search result? If so highlight the matching part
-                //   also keep track if this media had any matches at all in search results if not and search result is not empty skip it
-                // $searchResults = [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
+                $matchesByField = [];
                 if (count($searchResults) > 0) {
-                    $foundInSearch = false;
-
-                    foreach ($media as $field => $value) {
-                        $foundField = false;
-                        
-                        // Find if this media has matches in search results
-                        foreach ($searchResults as $result) {
-                            if ($result['mediaId'] == $media['id']) {
-                                // Check matches for this field
-                                foreach ($result['matches'] as $match) {
-                                    if ($match['field'] === $field) {
-                                        // Append to total score
-                                        $totalScore += $match['score'];
-
-                                        // Get
-                                        $start = $match['index'];
-                                        $length = $match['length'];
-                                        $before = htmlspecialchars(mb_substr($value, 0, $start));
-                                        $matchText = htmlspecialchars(mb_substr($value, $start, $length));
-                                        $after = htmlspecialchars(mb_substr($value, $start + $length));
-
-                                        // Validate so we arent inside another highlight or trying to highlight somewhere inside a '<span class="search-highlight">' or '</span>'
-                                        $isValidLocation = true;
-                                        // Check so we arent inside another highlight tags
-                                        $highlightStartTag = '<span class="search-highlight">';
-                                        $highlightEndTag = '</span>';
-                                        // Get indexes of all highlight-start and highlight-end tags and check if our match is inside any of them fully
-                                        // MARK: TODO:...
-
-                                        // Iterate all previous matches where we have same field and check if our index+len is inside any of their index+len, if so invalidate.
-                                        //   If our match overlaps out of the other match its still valid but we should not highlight the overlapping part, i.e change index if we overlap at end and change length if we overlap at start.
-                                        // MARK: TODO:...
-
-                                        // Highlight match in value
-                                        if ($isValidLocation === true) {
-                                            $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
-                                            $media[$field] = $value;
-                                        }
-
-                                        // Mark as found
-                                        $foundField = true;
-                                        $foundInSearch = true;
-                                    }
-                                }
+                    foreach ($searchResults as $result) {
+                        if ($result['mediaId'] == $media['id']) {
+                            foreach ($result['matches'] as $match) {
+                                $fieldName = $match['field'];
+                                $matchesByField[$fieldName][] = $match;
+                                $totalScore += $match['score'];
                             }
                         }
-
-                        // If not htmlspecialchars the value
-                        if (!$foundField) {
-                            $media[$field] = htmlspecialchars($value);
-                        }
-
                     }
 
-                    if (!$foundInSearch) {
+                    if (empty($matchesByField)) {
                         continue; // Skip this media, no matches found
+                    }
+                }
+
+                foreach ($media as $field => $value) {
+                    $stringValue = (string)$value;
+                    $stringLength = mb_strlen($stringValue, 'UTF-8');
+
+                    if (isset($matchesByField[$field]) && !empty($matchesByField[$field])) {
+
+                        // Process matches to create highlight ranges
+                        $ranges = [];
+                        foreach ($matchesByField[$field] as $match) {
+                            $index = max(0, (int)$match['index']);
+                            $length = max(0, (int)$match['length']);
+                            if ($length === 0) {
+                                continue;
+                            }
+
+                            $charStart = mb_strlen(mb_strcut($stringValue, 0, $index, 'UTF-8'), 'UTF-8');
+                            if ($charStart >= $stringLength) {
+                                continue;
+                            }
+
+                            $charEnd = min($stringLength, $charStart + $length);
+                            if ($charEnd <= $charStart) {
+                                continue;
+                            }
+
+                            $ranges[] = [
+                                'start' => $charStart,
+                                'end' => $charEnd,
+                            ];
+                        }
+
+                        // Merge overlapping ranges
+                        if (!empty($ranges)) {
+                            // Sort by index
+                            usort($ranges, function ($a, $b) {
+                                if ($a['start'] === $b['start']) {
+                                    return ($b['end'] <=> $a['end']); // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+                                }
+                                return $a['start'] <=> $b['start']; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+                            });
+
+                            // Merge
+                            $merged = [];
+                            foreach ($ranges as $range) {
+                                // If merged is empty, add the first range
+                                if (empty($merged)) {
+                                    $merged[] = $range;
+                                    continue;
+                                }
+
+                                $lastIndex = count($merged) - 1;
+                                $lastRange = $merged[$lastIndex];
+
+                                if ($range['start'] <= $lastRange['end']) {
+                                    $merged[$lastIndex]['end'] = max($lastRange['end'], $range['end']);
+                                } else {
+                                    $merged[] = $range;
+                                }
+                            }
+
+                            // Build highlighted string
+                            $highlighted = '';
+                            $currIndex = 0;
+                            foreach ($merged as $mergedRange) {
+                                // If there is a gap, htmlescape the segment
+                                if ($mergedRange['start'] > $currIndex) {
+                                    $segmentLength = $mergedRange['start'] - $currIndex;
+                                    $segment = mb_substr($stringValue, $currIndex, $segmentLength);
+                                    $escapedSegment = htmlspecialchars($segment, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                                    $highlighted .= str_replace(' ', '&nbsp;', $escapedSegment);
+                                }
+
+                                // Highlight segment
+                                $highlightLength = $mergedRange['end'] - $mergedRange['start'];
+                                $highlightText = mb_substr($stringValue, $mergedRange['start'], $highlightLength);
+                                $highlighted .= '<span class="search-highlight">' . htmlspecialchars($highlightText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
+                                $currIndex = $mergedRange['end'];
+                            }
+
+                            // Append any remaining text after last highlight htmlescaped
+                            if ($currIndex < $stringLength) {
+                                $tail = mb_substr($stringValue, $currIndex);
+                                $escapedTail = htmlspecialchars($tail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                                $highlighted .= str_replace(' ', '&nbsp;', $escapedTail);
+                            }
+
+                            // Replace value
+                            $media[$field] = $highlighted;
+
+                        // If no valid ranges, htmlescape full string
+                        } else {
+                            $escapedFull = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                            $media[$field] = str_replace(' ', '&nbsp;', $escapedFull);
+                        }
+
+                    // If no matches for this field, htmlescape full string
+                    } else {
+                        $escapedNoMatch = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                        $media[$field] = str_replace(' ', '&nbsp;', $escapedNoMatch);
                     }
                 }
 
@@ -289,7 +346,7 @@ if (isset($_SESSION['user_id'])) {
 
             // Sort $filteredMediaList by score descending
             usort($filteredMediaList, function($a, $b) {
-                return $b[0] <=> $a[0];
+                return $b[0] <=> $a[0]; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
             });
 
             foreach ($filteredMediaList as $mediaWithScore) {
@@ -311,27 +368,36 @@ if (isset($_SESSION['user_id'])) {
                     <div class="media-image-container">
                     ' . imageType($media['image_url'], $imageSize) . '
                     </div>
-                    <p class="description">' . nl2br($media['description']) . '</p>
-                    <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
-                    <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
-                    <p>
+                    <div class="description-wrapper"><p class="description">' . nl2br($media['description']) . '</p></div>
                     ' . (
-                        $media['media_type'] !== 'film'
-                        ? (
-                            isset($media['isbn'])
-                            ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
-                            : ""
-                        )
-                        : (
-                            isset($media['isan'])
-                            ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
-                            : ""
-                        )
+                        $COLLAPSE_CARD_DETAILS
+                        ? '<details>
+                            <summary>Details</summary>'
+                        : ''
                     ) . '
-                        <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
-                    </p>';
-                        
-                echo '    
+                        <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
+                        <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
+                        <p>
+                        ' . (
+                            $media['media_type'] !== 'film'
+                            ? (
+                                isset($media['isbn'])
+                                ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
+                                : ""
+                            )
+                            : (
+                                isset($media['isan'])
+                                ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
+                                : ""
+                            )
+                        ) . '
+                            <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
+                        </p>';
+                if ($COLLAPSE_CARD_DETAILS) {
+                    echo '</details>';
+                }
+
+                echo '<p>  
                         <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
                     </p>
                     ' . ($showsISBNorISAN ? '' : '<br>') . '
@@ -363,7 +429,7 @@ if (isset($_SESSION['user_id'])) {
             </div>
         </section>
 
-        <!-- Invoices -->
+        <!-- Loans -->
         <section id="loans-section" class="my-account-view-section">
             <div class="section-card">
                 <h3>Your Loans</h3>
