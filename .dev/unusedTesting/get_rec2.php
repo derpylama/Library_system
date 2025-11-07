@@ -10,7 +10,7 @@ function getRecommendations(
     float $maxCategoryShare = 0.7   // max share per category if diversity mode on
 ): array
 {
-    // 1️⃣ Fetch user's most recent sab_codes from loans
+    // 1️ Fetch user's most recent sab_codes from loans
     $query = "
         SELECT m.sab_code
         FROM loan l
@@ -28,7 +28,7 @@ function getRecommendations(
         return []; // No history = no recommendations
     }
 
-    // 2️⃣ Extract main categories (first uppercase letter)
+    // 2️ Extract main categories (first uppercase letter)
     $mainCategories = array_filter(array_map(function ($code) {
         return preg_match('/[A-Z]/', $code, $matches) ? $matches[0] : null;
     }, $sabCodes));
@@ -37,12 +37,12 @@ function getRecommendations(
         return [];
     }
 
-    // 3️⃣ Count and find top 3 categories
+    // 3 Count and find top 3 categories
     $categoryCounts = array_count_values($mainCategories);
     arsort($categoryCounts);
     $topCategories = array_slice($categoryCounts, 0, 3, true);
 
-    // 4️⃣ Calculate proportional limits
+    // 4️ Calculate proportional limits
     $total = array_sum($topCategories);
     $categoryLimits = [];
     $accumulated = 0;
@@ -72,7 +72,7 @@ function getRecommendations(
         $accumulated--;
     }
 
-    // 5️⃣ Fetch recommendations proportionally per category
+    // 5️ Fetch recommendations proportionally per category
     $recommendations = [];
     $missing = 0;
 
@@ -111,7 +111,7 @@ function getRecommendations(
         $missing += max(0, $limit - count($mediaIds));
     }
 
-    // 6️⃣ Fill any missing slots with random available items (no duplicates)
+    // 6️ Fill any missing slots with random available items (no duplicates)
     if ($missing > 0) {
         $excludeList = empty($recommendations) ? '0' : implode(',', $recommendations);
 
@@ -139,18 +139,11 @@ function getRecommendations(
         $recommendations = array_merge($recommendations, $extra);
     }
 
-    // 7️⃣ Remove duplicates and trim to desired length
+    // 7️ Remove duplicates and trim to desired length
     $recommendations = array_values(array_unique($recommendations));
     $recommendations = array_slice($recommendations, 0, $recommendationLimit);
 
     return $recommendations;
 }
-
-/* // ✅ Example usage
-$recommendations = getRecommendations($pdo, 2, 50, 10, true, 0.7);
-foreach ($recommendations as $id) {
-    echo "Media ID: $id<br>";
-}
- */
 
 ?>
