@@ -97,9 +97,16 @@ input[name="q"]:focus, input[name="q"]:active {
     align-items: center;
 }
 
+#popup-wrapper.with-click-through {
+    pointer-events: none;
+}
+
 #popup-wrapper:has(.popup:not(.hidden)) {
-    background-color: rgba(0,0,0,0.5);
     display: flex;
+}
+
+#popup-wrapper:has(.popup:not(.hidden)).popup-wrapper-with-backdrop {
+    background-color: rgba(0,0,0,0.5);
 }
 
 #popup-wrapper .popup {
