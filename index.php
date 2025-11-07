@@ -2,6 +2,7 @@
 require_once('php/db.php');
 require_once('php/search.php');
 require_once('php/images.php');
+require_once('php/account.php');
 
 session_start();
 
@@ -167,6 +168,24 @@ if (isset($_SESSION['user_id'])) {
     <div class="search-bar">
         <form method="GET" action="index.php">
             <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+            <select name="typefilter">
+                
+                <!--
+                <option value="all">All Types</option>
+                <option value="book">Books</option>
+                <option value="audiobook">Audiobooks</option>
+                <option value="film">Films</option>
+                -->
+
+                <?php
+                // Select if $_GET typefilter is set
+                $typefilter = isset($_GET['typefilter']) ? $_GET['typefilter'] : 'all';
+                echo '<option value="all"' . ($typefilter === 'all' ? ' selected' : '') . '>All Types</option>';
+                echo '<option value="bok"' . ($typefilter === 'bok' ? ' selected' : '') . '>Books</option>';
+                echo '<option value="ljudbok"' . ($typefilter === 'ljudbok' ? ' selected' : '') . '>Audiobooks</option>';
+                echo '<option value="film"' . ($typefilter === 'film' ? ' selected' : '') . '>Films</option>';
+                ?>
+            </select>
             <button type="submit">Search</button>
         </form>
     </div>
@@ -198,14 +217,32 @@ if (isset($_SESSION['user_id'])) {
                                     // Append to total score
                                     $totalScore += $match['score'];
 
-                                    // Highlight match in value
+                                    // Get
                                     $start = $match['index'];
                                     $length = $match['length'];
                                     $before = htmlspecialchars(mb_substr($value, 0, $start));
                                     $matchText = htmlspecialchars(mb_substr($value, $start, $length));
                                     $after = htmlspecialchars(mb_substr($value, $start + $length));
-                                    $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
-                                    $media[$field] = $value;
+
+                                    // Validate so we arent inside another highlight or trying to highlight somewhere inside a '<span class="search-highlight">' or '</span>'
+                                    $isValidLocation = true;
+                                    // Check so we arent inside another highlight tags
+                                    $highlightStartTag = '<span class="search-highlight">';
+                                    $highlightEndTag = '</span>';
+                                    // Get indexes of all highlight-start and highlight-end tags and check if our match is inside any of them fully
+                                    // MARK: TODO:...
+
+                                    // Iterate all previous matches where we have same field and check if our index+len is inside any of their index+len, if so invalidate.
+                                    //   If our match overlaps out of the other match its still valid but we should not highlight the overlapping part, i.e change index if we overlap at end and change length if we overlap at start.
+                                    // MARK: TODO:...
+
+                                    // Highlight match in value
+                                    if ($isValidLocation === true) {
+                                        $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
+                                        $media[$field] = $value;
+                                    }
+
+                                    // Mark as found
                                     $foundField = true;
                                     $foundInSearch = true;
                                 }
@@ -222,6 +259,13 @@ if (isset($_SESSION['user_id'])) {
 
                 if (!$foundInSearch) {
                     continue; // Skip this media, no matches found
+                }
+            }
+
+            // If $_GET typefilter is set filter by media type
+            if (isset($_GET['typefilter']) && $_GET['typefilter'] !== 'all') {
+                if ($media['media_type'] !== $_GET['typefilter']) {
+                    continue; // Skip this media, type does not match filter
                 }
             }
 
@@ -293,6 +337,7 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- My Loans View -->
     <div id="loans-view" class="hidden">
+    <?=showAccountButton();?>
     <h3>My Loans</h3>
     <?php if (empty($userLoans)): ?>
         <p>You currently have no loans.</p>
