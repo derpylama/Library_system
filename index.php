@@ -4,7 +4,7 @@ require_once('php/search.php');
 require_once('php/images.php');
 require_once('php/account.php');
 
-session_start();
+@session_start();
 
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
@@ -128,11 +128,20 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <title>User Dashboard</title>
-    <link rel="stylesheet" href="css/user_dashboard.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/user_dashboard.js"></script>
+    <script src="js/index.js"></script>
 </head>
 <body>
+    <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
+    <div id="popup-wrapper" class="popup-wrapper-with-backdrop">
+        <?php
+
+            // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
+
+        ?>
+    </div>
+
     <header>
         <?php 
             if (isset($_SESSION["user_id"])){
@@ -146,314 +155,328 @@ if (isset($_SESSION['user_id'])) {
         <div>
             <?php
                 if (isset($_SESSION['user_id']) && $isAdmin) {
-                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'media\')">All Media</button>';
-                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'loans\')">My Account</button>';
+                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'all-media-view\')">All Media</button>';
+                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'my-account-view\')">My Account</button>';
                     echo '<a href="admin.php" class="toggle-btn admin-button">Admin Panel</a>';
                     echo '<a href="./logout.php" class="toggle-btn logout-button">Logout</a>';
                 }
                 else if (isset($_SESSION['user_id'])) {
-                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'media\')">All Media</button>';
-                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'loans\')">My Account</button>';
+                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'all-media-view\')">All Media</button>';
+                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'my-account-view\')">My Account</button>';
                     echo '<a href="./logout.php" class="toggle-btn logout-button">Logout</a>';
                 }
                 else {
-                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'media\')">All Media</button>';
+                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'all-media-view\')">All Media</button>';
                     echo '<a href="login.php" class="toggle-btn nav-button">Login</a>';
                 }
             ?>
         </div>
     </header>
 
-    <!-- search bar -->
-    <div class="search-bar">
-        <form method="GET" action="index.php">
-            <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
-            <select name="typefilter">
-                
-                <!--
-                <option value="all">All Types</option>
-                <option value="book">Books</option>
-                <option value="audiobook">Audiobooks</option>
-                <option value="film">Films</option>
-                -->
-
-                <?php
-                // Select if $_GET typefilter is set
-                $typefilter = isset($_GET['typefilter']) ? $_GET['typefilter'] : 'all';
-                echo '<option value="all"' . ($typefilter === 'all' ? ' selected' : '') . '>All Types</option>';
-                echo '<option value="bok"' . ($typefilter === 'bok' ? ' selected' : '') . '>Books</option>';
-                echo '<option value="ljudbok"' . ($typefilter === 'ljudbok' ? ' selected' : '') . '>Audiobooks</option>';
-                echo '<option value="film"' . ($typefilter === 'film' ? ' selected' : '') . '>Films</option>';
-                ?>
-            </select>
-            <button type="submit">Search</button>
-        </form>
-    </div>
-
     <!-- All Media View -->
-    <div id="media-view" class="grid">
+    <section id="all-media-view">
+        <!-- search bar -->
+        <div class="search-bar">
+            <form method="GET" action="index.php">
+                <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+                <select name="typefilter", id="typefilter">
+                    
+                    <!--
+                    <option value="all">All Types</option>
+                    <option value="book">Books</option>
+                    <option value="audiobook">Audiobooks</option>
+                    <option value="film">Films</option>
+                    -->
 
-        <?php
-        $filteredMediaList = []; // Maps [-1/score, <media>]
-        foreach ($mediaList as $media) {
+                    <?php
+                    // Select if $_GET typefilter is set
+                    $typefilter = isset($_GET['typefilter']) ? $_GET['typefilter'] : 'all';
+                    echo '<option value="all"' . ($typefilter === 'all' ? ' selected' : '') . '>All Types</option>';
+                    echo '<option value="bok"' . ($typefilter === 'bok' ? ' selected' : '') . '>Books</option>';
+                    echo '<option value="ljudbok"' . ($typefilter === 'ljudbok' ? ' selected' : '') . '>Audiobooks</option>';
+                    echo '<option value="film"' . ($typefilter === 'film' ? ' selected' : '') . '>Films</option>';
+                    ?>
+                </select>
+                <button type="submit">Search</button>
+            </form>
+        </div>
 
-            $totalScore = 0;
+        <div class="grid">
+            
+            <?php
+            $filteredMediaList = []; // Maps [-1/score, <media>]
+            foreach ($mediaList as $media) {
 
-            $matchesByField = [];
-            if (count($searchResults) > 0) {
-                foreach ($searchResults as $result) {
-                    if ($result['mediaId'] == $media['id']) {
-                        foreach ($result['matches'] as $match) {
-                            $fieldName = $match['field'];
-                            $matchesByField[$fieldName][] = $match;
-                            $totalScore += $match['score'];
-                        }
-                    }
-                }
+                $totalScore = 0;
 
-                if (empty($matchesByField)) {
-                    continue; // Skip this media, no matches found
-                }
-            }
-
-            foreach ($media as $field => $value) {
-                $stringValue = (string)$value;
-                $stringLength = mb_strlen($stringValue, 'UTF-8');
-
-                if (isset($matchesByField[$field]) && !empty($matchesByField[$field])) {
-
-                    // Process matches to create highlight ranges
-                    $ranges = [];
-                    foreach ($matchesByField[$field] as $match) {
-                        $index = max(0, (int)$match['index']);
-                        $length = max(0, (int)$match['length']);
-                        if ($length === 0) {
-                            continue;
-                        }
-
-                        $charStart = mb_strlen(mb_strcut($stringValue, 0, $index, 'UTF-8'), 'UTF-8');
-                        if ($charStart >= $stringLength) {
-                            continue;
-                        }
-
-                        $charEnd = min($stringLength, $charStart + $length);
-                        if ($charEnd <= $charStart) {
-                            continue;
-                        }
-
-                        $ranges[] = [
-                            'start' => $charStart,
-                            'end' => $charEnd,
-                        ];
-                    }
-
-                    // Merge overlapping ranges
-                    if (!empty($ranges)) {
-                        // Sort by index
-                        usort($ranges, function ($a, $b) {
-                            if ($a['start'] === $b['start']) {
-                                return ($b['end'] <=> $a['end']); // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+                $matchesByField = [];
+                if (count($searchResults) > 0) {
+                    foreach ($searchResults as $result) {
+                        if ($result['mediaId'] == $media['id']) {
+                            foreach ($result['matches'] as $match) {
+                                $fieldName = $match['field'];
+                                $matchesByField[$fieldName][] = $match;
+                                $totalScore += $match['score'];
                             }
-                            return $a['start'] <=> $b['start']; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
-                        });
+                        }
+                    }
 
-                        // Merge
-                        $merged = [];
-                        foreach ($ranges as $range) {
-                            // If merged is empty, add the first range
-                            if (empty($merged)) {
-                                $merged[] = $range;
+                    if (empty($matchesByField)) {
+                        continue; // Skip this media, no matches found
+                    }
+                }
+
+                foreach ($media as $field => $value) {
+                    $stringValue = (string)$value;
+                    $stringLength = mb_strlen($stringValue, 'UTF-8');
+
+                    if (isset($matchesByField[$field]) && !empty($matchesByField[$field])) {
+
+                        // Process matches to create highlight ranges
+                        $ranges = [];
+                        foreach ($matchesByField[$field] as $match) {
+                            $index = max(0, (int)$match['index']);
+                            $length = max(0, (int)$match['length']);
+                            if ($length === 0) {
                                 continue;
                             }
 
-                            $lastIndex = count($merged) - 1;
-                            $lastRange = $merged[$lastIndex];
-
-                            if ($range['start'] <= $lastRange['end']) {
-                                $merged[$lastIndex]['end'] = max($lastRange['end'], $range['end']);
-                            } else {
-                                $merged[] = $range;
-                            }
-                        }
-
-                        // Build highlighted string
-                        $highlighted = '';
-                        $currIndex = 0;
-                        foreach ($merged as $mergedRange) {
-                            // If there is a gap, htmlescape the segment
-                            if ($mergedRange['start'] > $currIndex) {
-                                $segmentLength = $mergedRange['start'] - $currIndex;
-                                $segment = mb_substr($stringValue, $currIndex, $segmentLength);
-                                $escapedSegment = htmlspecialchars($segment, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                                $highlighted .= str_replace(' ', '&nbsp;', $escapedSegment);
+                            $charStart = mb_strlen(mb_strcut($stringValue, 0, $index, 'UTF-8'), 'UTF-8');
+                            if ($charStart >= $stringLength) {
+                                continue;
                             }
 
-                            // Highlight segment
-                            $highlightLength = $mergedRange['end'] - $mergedRange['start'];
-                            $highlightText = mb_substr($stringValue, $mergedRange['start'], $highlightLength);
-                            $highlighted .= '<span class="search-highlight">' . htmlspecialchars($highlightText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
-                            $currIndex = $mergedRange['end'];
+                            $charEnd = min($stringLength, $charStart + $length);
+                            if ($charEnd <= $charStart) {
+                                continue;
+                            }
+
+                            $ranges[] = [
+                                'start' => $charStart,
+                                'end' => $charEnd,
+                            ];
                         }
 
-                        // Append any remaining text after last highlight htmlescaped
-                        if ($currIndex < $stringLength) {
-                            $tail = mb_substr($stringValue, $currIndex);
-                            $escapedTail = htmlspecialchars($tail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                            $highlighted .= str_replace(' ', '&nbsp;', $escapedTail);
+                        // Merge overlapping ranges
+                        if (!empty($ranges)) {
+                            // Sort by index
+                            usort($ranges, function ($a, $b) {
+                                if ($a['start'] === $b['start']) {
+                                    return ($b['end'] <=> $a['end']); // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+                                }
+                                return $a['start'] <=> $b['start']; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+                            });
+
+                            // Merge
+                            $merged = [];
+                            foreach ($ranges as $range) {
+                                // If merged is empty, add the first range
+                                if (empty($merged)) {
+                                    $merged[] = $range;
+                                    continue;
+                                }
+
+                                $lastIndex = count($merged) - 1;
+                                $lastRange = $merged[$lastIndex];
+
+                                if ($range['start'] <= $lastRange['end']) {
+                                    $merged[$lastIndex]['end'] = max($lastRange['end'], $range['end']);
+                                } else {
+                                    $merged[] = $range;
+                                }
+                            }
+
+                            // Build highlighted string
+                            $highlighted = '';
+                            $currIndex = 0;
+                            foreach ($merged as $mergedRange) {
+                                // If there is a gap, htmlescape the segment
+                                if ($mergedRange['start'] > $currIndex) {
+                                    $segmentLength = $mergedRange['start'] - $currIndex;
+                                    $segment = mb_substr($stringValue, $currIndex, $segmentLength);
+                                    $escapedSegment = htmlspecialchars($segment, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                                    $highlighted .= str_replace(' ', '&nbsp;', $escapedSegment);
+                                }
+
+                                // Highlight segment
+                                $highlightLength = $mergedRange['end'] - $mergedRange['start'];
+                                $highlightText = mb_substr($stringValue, $mergedRange['start'], $highlightLength);
+                                $highlighted .= '<span class="search-highlight">' . htmlspecialchars($highlightText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
+                                $currIndex = $mergedRange['end'];
+                            }
+
+                            // Append any remaining text after last highlight htmlescaped
+                            if ($currIndex < $stringLength) {
+                                $tail = mb_substr($stringValue, $currIndex);
+                                $escapedTail = htmlspecialchars($tail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                                $highlighted .= str_replace(' ', '&nbsp;', $escapedTail);
+                            }
+
+                            // Replace value
+                            $media[$field] = $highlighted;
+
+                        // If no valid ranges, htmlescape full string
+                        } else {
+                            $escapedFull = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                            $media[$field] = str_replace(' ', '&nbsp;', $escapedFull);
                         }
 
-                        // Replace value
-                        $media[$field] = $highlighted;
-
-                    // If no valid ranges, htmlescape full string
+                    // If no matches for this field, htmlescape full string
                     } else {
-                        $escapedFull = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                        $media[$field] = str_replace(' ', '&nbsp;', $escapedFull);
+                        $escapedNoMatch = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                        $media[$field] = str_replace(' ', '&nbsp;', $escapedNoMatch);
                     }
-                
-                // If no matches for this field, htmlescape full string
+                }
+
+                // If $_GET typefilter is set filter by media type
+                if (isset($_GET['typefilter']) && $_GET['typefilter'] !== 'all') {
+                    if ($media['media_type'] !== $_GET['typefilter']) {
+                        continue; // Skip this media, type does not match filter
+                    }
+                }
+
+                $filteredMediaList[] = [$totalScore, $media];
+            }
+
+            // Sort $filteredMediaList by score descending
+            usort($filteredMediaList, function($a, $b) {
+                return $b[0] <=> $a[0]; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
+            });
+
+            foreach ($filteredMediaList as $mediaWithScore) {
+                $media = $mediaWithScore[1];
+
+                if (isset($media["image_width"]) && isset($media["image_height"])) {
+                    $imageSize = [intval($media["image_width"]), intval($media["image_height"])];
                 } else {
-                    $escapedNoMatch = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                    $media[$field] = str_replace(' ', '&nbsp;', $escapedNoMatch);
+                    $imageSize = getImageSizeW($media['image_url']);
                 }
-            }
 
-            // If $_GET typefilter is set filter by media type
-            if (isset($_GET['typefilter']) && $_GET['typefilter'] !== 'all') {
-                if ($media['media_type'] !== $_GET['typefilter']) {
-                    continue; // Skip this media, type does not match filter
-                }
-            }
+                $showsISBNorISAN = ($media['media_type'] !== 'film') ? isset($media['isbn']) : isset($media['isan']);
 
-            $filteredMediaList[] = [$totalScore, $media];
-        }
+                echo '
+                <div class="card" '.cardSize($imageSize).'>
+                    <div class="media-title-container">
+                        <h3>' . $media['title'] . '</h3>
+                    </div>
+                    <div class="media-image-container">
+                    ' . imageType($media['image_url'], $imageSize) . '
+                    </div>
+                    <p class="description">' . nl2br($media['description']) . '</p>
+                    <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
+                    <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
+                    <p>
+                    ' . (
+                        $media['media_type'] !== 'film'
+                        ? (
+                            isset($media['isbn'])
+                            ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
+                            : ""
+                        )
+                        : (
+                            isset($media['isan'])
+                            ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
+                            : ""
+                        )
+                    ) . '
+                        <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
+                        <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
+                        <strong>Available:</strong> ' . ($media['available_copies'] ?? 0) . '<br>
+                        <strong>Loaned:</strong> ' . ($media['loaned_copies'] ?? 0) . '
+                    </p>';
 
-        // Sort $filteredMediaList by score descending
-        usort($filteredMediaList, function($a, $b) {
-            return $b[0] <=> $a[0]; // <=> is called a spaceship operator and returns -1, 0, 1 for less than, equal, greater than
-        });
+                    if (isset($_SESSION['user_id'])) {
+                        echo '
+                        <form method="POST">
+                            <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                            <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                                ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                            </button>
+                        </form>';
+                    }else{
+                        echo '<button class="media-loan-button" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '</button>';
+                    }
 
-        foreach ($filteredMediaList as $mediaWithScore) {
-            $media = $mediaWithScore[1];
-
-            if (isset($media["image_width"]) && isset($media["image_height"])) {
-                $imageSize = [intval($media["image_width"]), intval($media["image_height"])];
-            } else {
-                $imageSize = getImageSizeW($media['image_url']);
-            }
-
-            $showsISBNorISAN = ($media['media_type'] !== 'film') ? isset($media['isbn']) : isset($media['isan']);
-
-            echo '
-            <div class="card" '.cardSize($imageSize).'>
-                <div class="media-title-container">
-                    <h3>' . $media['title'] . '</h3>
-                </div>
-                <div class="media-image-container">
-                ' . imageType($media['image_url'], $imageSize) . '
-                </div>
-                <p class="description">' . nl2br($media['description']) . '</p>
-                <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
-                <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
-                <p>
-                ' . (
-                    $media['media_type'] !== 'film'
-                    ? (
-                        isset($media['isbn'])
-                        ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
-                        : ""
-                    )
-                    : (
-                        isset($media['isan'])
-                        ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
-                        : ""
-                    )
-                ) . '
-                    <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
-                    <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
-                    <strong>Available:</strong> ' . ($media['available_copies'] ?? 0) . '<br>
-                    <strong>Loaned:</strong> ' . ($media['loaned_copies'] ?? 0) . '
-                </p>';
-                    
-                if (isset($_SESSION['user_id'])) {
-                    echo '
+                echo '    
+                        <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
+                    </p>
+                    ' . ($showsISBNorISAN ? '' : '<br>') . '
                     <form method="POST">
                         <input type="hidden" name="media_id" value="' . $media['id'] . '">
                         <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
                             ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
                         </button>
-                    </form>';
-                }else{
-                    echo '<button class="media-loan-button" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '</button>';
-                }
-
-            echo '    
-                    <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
-                </p>
-                ' . ($showsISBNorISAN ? '' : '<br>') . '
-                <form method="POST">
-                    <input type="hidden" name="media_id" value="' . $media['id'] . '">
-                    <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
-                        ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
-                    </button>
-                </form>
-            </div>
-            ';
-        }
-        ?>
-    </div>
-
-    <!-- My Loans View -->
-    <div id="loans-view" class="hidden">
-    <?=showAccountButton();?>
-    <h3>My Loans</h3>
-    <?php if (empty($userLoans)): ?>
-        <p>You currently have no loans.</p>
-    <?php else: ?>
-        <div class="grid">
-            <?php foreach ($userLoans as $loan): ?>
-                <div class="card">
-                    <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
-                    <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
-                    <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
-                    <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
-                    <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
-                    <?php if ($loan['status'] === 'active'): ?>
-                        <p>
-                            <?php
-                            $days = $loan['days_left'];
-                            if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
-                            else echo "Due in $days days";
-                            ?>
-                        </p>
-                        <form method="POST">
-                            <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
-                            <button type="submit">Return Media</button>
-                        </form>
-                    <?php elseif ($loan['status'] === 'returned'): ?>
-                        <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
-                    <?php else: ?>
-                        <p class="overdue">Written off / overdue</p>
-                    <?php endif; ?>
+                    </form>
                 </div>
-            <?php endforeach; ?>
+                ';
+            }
+            ?>
         </div>
-    <?php endif; ?>
+    </section>
 
-    <!-- Invoices -->
-    <h3>Your Invoices</h3>
-    <?php if (empty($invoices)): ?>
-        <p>No invoices.</p>
-    <?php else: ?>
-        <?php foreach ($invoices as $inv): ?>
-            <div class="invoice">
-                <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
-                <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
-                <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
-                <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
-            </div>
-        <?php endforeach; ?>
-    <?php endif; ?>
-    </div>
+    <!-- My account -->
+    <section id="my-account-view" class="hidden">
+
+        <!-- Account -->
+        <section id="account-section" class="my-account-view-section">
+            <h3>Your Account</h3>
+            <?=showAccountButton();?>
+            <?=passwordChangeMessage();?>
+        </section>
+
+        <!-- Loans -->
+        <section id="loans-section" class="my-account-view-section">
+            <h3>Your Loans</h3>
+            <?php if (empty($userLoans)): ?>
+                <p>You currently have no loans.</p>
+            <?php else: ?>
+                <div class="grid">
+                    <?php foreach ($userLoans as $loan): ?>
+                        <div class="card">
+                            <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
+                            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
+                            <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
+                            <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
+                            <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
+                            <?php if ($loan['status'] === 'active'): ?>
+                                <p>
+                                    <?php
+                                    $days = $loan['days_left'];
+                                    if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
+                                    else echo "Due in $days days";
+                                    ?>
+                                </p>
+                                <form method="POST">
+                                    <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
+                                    <button type="submit">Return Media</button>
+                                </form>
+                            <?php elseif ($loan['status'] === 'returned'): ?>
+                                <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
+                            <?php else: ?>
+                                <p class="overdue">Written off / overdue</p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <!-- Invoices -->
+        <section id="invoices-section" class="my-account-view-section">
+            <h3>Your Invoices</h3>
+            <?php if (empty($invoices)): ?>
+                <p>No invoices.</p>
+            <?php else: ?>
+                <?php foreach ($invoices as $inv): ?>
+                    <div class="invoice">
+                        <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
+                        <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
+                        <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
+                        <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </section>
+    </section>
 </body>
 </html>

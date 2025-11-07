@@ -1,37 +1,205 @@
-body {
+h3 {
     display: flex;
-    align-items: center;
     justify-content: center;
-    height: 100vh;
-    padding: 1.1rem;
+    margin-bottom: 0;
+    margin-top: 0;
 }
-
-main {
-    background: white;
-    padding: 2rem;
-    border-radius: 0.5rem;
-    width: 20rem;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-
-h2 {
-    text-align: center;
-}
-
-input {
-    width: 93.7%;
-    padding: 0.5rem;
-    margin: 0.4rem 0;
-}
-
-button {
-    width: 100%;
-    padding: 0.6rem;
-    margin-top: 0.6rem;
+button, .toggle-btn {
+    background-color: var(--button-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 5px;
     cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+.toggle-btn {
+    margin-left: 0.625rem;
+}
+button:disabled {
+    background-color: var(--button-disabled-color);
+}
+.grid {
+    /* display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 20px;
+    margin-top: 20px;
+}
+.card {
+    background: white;
+    max-width: 25rem;
+    padding: 1rem;
+    padding-top: 0.6rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px var(--card-box-shadow-color);
 }
 
-.toggle {
-    text-align: center;
+.card > p {
+    margin: 0;
+    line-height: 1.2;
+}
+
+.card .description {
+    margin-bottom: 0.4rem;
     margin-top: 0.6rem;
+    overflow: auto;
+    height: 2rem;
+}
+
+.card > form:last-child, .card > button:last-child {
+    margin-top: 0.9rem;
+}
+
+.message {
+    margin-top: 1rem;
+    background: #e6ffe6;
+    border: 1px solid #b3ddb3;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+}
+.overdue {
+    color: red;
+    font-weight: bold;
+}
+.returned {
+    color: green;
+}
+.invoice {
+    margin-top: 2rem;
+    background: #fff7f7;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ffcccc;
+}
+.hidden { display: none; }
+.admin-btn {
+    background-color: #28a745;
+}
+.media-title-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+    align-items: start;
+    height: 3rem;
+    overflow: overlay;
+}
+
+.media-image {
+    max-width: calc(100%);
+    max-height: 100%;
+}
+
+.media-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+} 
+
+.media-image-portrait {
+    height: 22.3rem;
+    border-radius: 1rem;
+    object-fit: contain;
+    background-color: #fff;
+    display: block;
+}
+
+.media-image-landscape {
+    border-radius: 1rem;
+    width: 100%;
+    object-fit: contain;
+    background-color: #fff;
+    display: block;
+}
+
+.media-image-square {
+    width: 100%;
+    border-radius: 1rem;
+    object-fit: contain;
+    background-color: #fff;
+    display: block;
+}
+
+.card :last-child:disabled {
+    cursor: not-allowed;
+}
+
+.change-password-button, .change-password-form, .change-password-header {
+    margin-top: 1rem;
+    margin-right: 1rem;
+    justify-self: right;
+}
+.change-password-header {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    margin-right: 3rem;
+}
+
+.change-password-form input {
+    margin-bottom: 0.5rem;
+    padding: 0.4rem;
+    border-radius: 0.3rem;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+    margin-right: 2rem;
+}
+.change-password-form label {
+    font-weight: bold;
+    margin-right: 2rem;
+}
+.change-password-container {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-self: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    border: 3px solid #ccc;
+    padding: 0 0.5rem 1rem 1.7rem;
+    border-radius: 1rem;
+    
+}
+.change-password-message {
+    margin-top: 0.5rem;
+    background: #e6ffe6;
+    border: 1px solid #b3ddb3;
+    padding: 0.625rem;
+    justify-self: flex-end;
+    border-radius: 0.5rem;
+}
+.error-card {
+    background: #fff0f0;
+    border: 1px solid #ffb3b3;
+}
+.success-card {
+    background: #e6ffe6;
+    border: 1px solid #b3ddb3;
+}
+#top-menu-message {
+    margin-top: 1rem;
+    background: #ff4141;
+    border: 1px solid #ff4141;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+}
+
+#my-account-view > section {
+    margin-top: 2rem;
+}
+
+#typefilter {
+    background-color: white;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
 }
