@@ -8,6 +8,7 @@ session_start();
 
 // --- AUTH ---
 if (!isset($_SESSION['user_id'])) {
+    echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
     header('Location: index.php');
     exit;
 }
@@ -19,6 +20,7 @@ $user = $stmt->fetch();
 
 if (!$user || $user['is_admin'] != 1) {
     echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
+    header('Location: index.php');
     exit;
 }
 
