@@ -128,9 +128,9 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <title>User Dashboard</title>
-    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/user_dashboard.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/index.js"></script>
+    <script src="js/user_dashboard.js"></script>
 </head>
 <body>
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
