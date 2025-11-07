@@ -3,13 +3,28 @@
 
 function getRecommendations(
     PDO $pdo,
-    int $userId,
+    ?int $userId = null, // negativ if you no user id or empty
     int $loanHistoryLimit = 50,     // how many latest loans to analyze
     int $recommendationLimit = 20,  // how many recommendations to return
     bool $diversityMode = true,     // cap dominance of a single category
     float $maxCategoryShare = 0.7   // max share per category if diversity mode on
 ): array
 {
+    // ✅ If no userId provided → return 10 most loaned media
+    if (empty($userId) || $userId <= 0) {
+        $stmt = $pdo->query("
+            SELECT m.id AS media_id
+            FROM media m
+            JOIN copy c ON c.media_id = m.id
+            JOIN loan l ON l.copy_id = c.id
+            WHERE c.status = 'available'
+            GROUP BY m.id
+            ORDER BY COUNT(l.id) DESC
+            LIMIT 10
+        ");
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+    
     // 1️ Fetch user's most recent sab_codes from loans
     $query = "
         SELECT m.sab_code
