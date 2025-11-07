@@ -84,3 +84,34 @@ input[name="q"]:focus, input[name="q"]:active {
     outline: none;
     border: 1px solid #ccc;
 }
+
+#popup-wrapper {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#popup-wrapper:has(.popup:not(.hidden)) {
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+}
+
+#popup-wrapper .popup {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px var(--card-box-shadow-color);
+
+    /* enable interaction with popup */
+    pointer-events: auto;
+}
+
+body:has(.popup:not(.hidden)) {
+    overflow: hidden;
+}

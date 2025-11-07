@@ -133,6 +133,14 @@ if (isset($_SESSION['user_id'])) {
     <script src="js/user_dashboard.js"></script>
 </head>
 <body>
+    <div id="popup-wrapper">
+        <?php
+
+            // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
+            
+        ?>
+    </div>
+
     <header>
         <?php 
             if (isset($_SESSION["user_id"])){
