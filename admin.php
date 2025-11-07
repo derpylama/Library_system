@@ -17,10 +17,13 @@ $stmt = $pdo->prepare("SELECT is_admin FROM user WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
-if (!$user || $user['is_admin'] != 1) {
+$isAdmin = $user && $user['is_admin'] == 1;
+
+if (!$isAdmin) {
     echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
     exit;
 }
+
 
 // --- ACTIONS ---
 $message = "";
@@ -135,8 +138,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
 }
 
 // Delete media
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
-    $id = (int)$_POST['delete_media'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirmed_delete_media'])) {
+    $id = (int)$_POST['confirmed_delete_media'];
     $pdo->prepare("DELETE FROM media WHERE id = ?")->execute([$id]);
     $message = "Media ID $id deleted.";
 }
@@ -246,9 +249,16 @@ $loans = $pdo->query("
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
     <div id="popup-wrapper" class="popup-wrapper-with-backdrop">
         <?php
-
+            if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['popup_message'])) {
+                $delMedia = $_POST['delete_media'] ?? null;
+                if (!$isAdmin) {
+                    $delMedia = null;
+                }
+                echo popupOutputer($delMedia, $_POST['popup_message']);
+            }
             // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
-            popupOutputer();
+            // echo popupOutputer();
+            
         ?>
     </div>
 
@@ -404,6 +414,7 @@ $loans = $pdo->query("
                         <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
                         <form method="POST" style="display:inline;">
                             <input type="hidden"  name="delete_media" value="<?php echo $m['id']; ?>">
+                            <input type="hidden" name="popup_message" value="<?php echo $m['title'] ?>">
                             <button class="delete action-button" type="submit">Delete</button>
                         </form>
                     </td>

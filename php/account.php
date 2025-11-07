@@ -1,60 +1,51 @@
 <?php
 
-function showAccountButton() {
-    // Track toggle state in session
-    if (!isset($_SESSION['change_password_message'])) {
-        $_SESSION['change_password_message'] = '';
-    }
-    if (!isset($_SESSION['show_change_password'])) {
-        $_SESSION['show_change_password'] = false;
-    }
-
-    // If button is pressed, flip the state
-    if (isset($_POST['toggle_change_password'])) {
-        $_SESSION['show_change_password'] = !$_SESSION['show_change_password'];
-    }
-
-    // Choose button label based on state
-    $buttonText = $_SESSION['show_change_password'] ? 'Close Edit Password' : 'Open Edit Password';
-
-    // Display the button
-    echo '
-    <form method="POST" class="change-password-button">
-        <button type="submit" name="toggle_change_password">' . $buttonText . '</button>
-    </form>
-    ';
-
-    // If state is true, show the edit form
-    if ($_SESSION['show_change_password']) {
-        editAccount();
-    }
+function showAccountButton($edit = 'name') {
+    echo '<div class="change-password-container">
+    <details class="account-button-card">';
+    editAccount($edit);
+    echo '</details>
+    </div>';
 }
 
-function editAccount() {
-    echo '
-    <div class="change-password-container card">
-    <h2 class="change-password-header">Change Password</h2>
-    <form method="POST" class="change-password-form">
-        <input type="hidden" name="action" value="change_password">
+function editAccount($edit) {
+    if ($edit === 'name') {
+        echo '
+        <summary><h2 class="change-password-header">Change Username</h2></summary>
+        <form method="POST" class="change-password-form">
+            <input type="hidden" name="action" value="change_username">
 
-        <label for="old_password">Old Password:</label><br>
-        <input type="password" id="old_password" name="old_password" required><br><br>
+            <label for="new_username">New Username:</label><br>
+            <input type="text" id="new_username" name="new_username" required><br><br>
 
-        <label for="new_password">New Password:</label><br>
-        <input type="password" id="new_password" name="new_password" required><br><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password" required><br><br>
 
-        <label for="confirm_password">Confirm New Password:</label><br>
-        <input type="password" id="confirm_password" name="confirm_password" required><br><br>
+            <button type="submit">Change Username</button>
+        </form>';
+    } elseif ($edit === 'password') {
+        echo '
+        <summary><h2 class="change-password-header">Change Password</h2></summary>
+        <form method="POST" class="change-password-form">
+            <input type="hidden" name="action" value="change_password">
 
-        <button type="submit">Change Password</button>
-    </form>
-    </div>
-    ';
+            <label for="old_password">Old Password:</label><br>
+            <input type="password" id="old_password" name="old_password" required><br><br>
+
+            <label for="new_password">New Password:</label><br>
+            <input type="password" id="new_password" name="new_password" required><br><br>
+
+            <label for="confirm_password">Confirm New Password:</label><br>
+            <input type="password" id="confirm_password" name="confirm_password" required><br><br>
+
+            <button type="submit">Change Password</button>
+        </form>';
+    }
 }
 
 function passwordChangeMessage() {
     if (isset($_SESSION['change_password_message']) && $_SESSION['change_password_message'] !== '') {
-        if ($_SESSION['change_password_message'] === 'Password changed successfully.') {
+        if ($_SESSION['change_password_message'] === 'Password changed successfully.' || $_SESSION['change_password_message'] === 'Username changed successfully.') {
             echo '<p class="change-password-message success-card">' . $_SESSION['change_password_message'] . '</p>';
         } else {
             echo '<p class="change-password-message error-card">' . $_SESSION['change_password_message'] . '</p>';
@@ -97,6 +88,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
     } else {
         $_SESSION['change_password_message'] = 'Old password is incorrect.';
+    }
+    
+}
+
+// Handle username change
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_username') { 
+    require_once('db.php');
+    // if session not started, start it
+    if (session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
+
+    $userId = $_SESSION['user_id'];
+    $newUsername = $_POST['new_username'];
+    $password = $_POST['password'];
+
+    // Get sha256 of the password
+    $passwordHash = hash('sha256', $password);
+
+    // Fetch current password hash from database
+    $stmt = $pdo->prepare('SELECT passwordhash FROM user WHERE id = ?');
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user && ($passwordHash === $user['passwordhash'])) {
+        // Update username in database
+        $update = $pdo->prepare('UPDATE user SET username = ? WHERE id = ?');
+        $update->execute([$newUsername, $userId]);
+        $_SESSION['change_password_message'] = 'Username changed successfully.';
+        // Update session username
+        $_SESSION['username'] = $newUsername;
+    } else {
+        $_SESSION['change_password_message'] = 'Password is incorrect.';
     }
     
 }
