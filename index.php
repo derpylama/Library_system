@@ -4,6 +4,8 @@ require_once('php/search.php');
 require_once('php/images.php');
 require_once('php/account.php');
 
+$COLLAPSE_CARD_DETAILS = false;
+
 @session_start();
 
 if (isset($_SESSION['user_id'])) {
@@ -363,24 +365,33 @@ if (isset($_SESSION['user_id'])) {
                     ' . imageType($media['image_url'], $imageSize) . '
                     </div>
                     <p class="description">' . nl2br($media['description']) . '</p>
-                    <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
-                    <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
-                    <p>
                     ' . (
-                        $media['media_type'] !== 'film'
-                        ? (
-                            isset($media['isbn'])
-                            ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
-                            : ""
-                        )
-                        : (
-                            isset($media['isan'])
-                            ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
-                            : ""
-                        )
+                        $COLLAPSE_CARD_DETAILS
+                        ? '<details>
+                            <summary>Details</summary>'
+                        : ''
                     ) . '
-                        <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
-                    </p>';
+                        <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
+                        <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
+                        <p>
+                        ' . (
+                            $media['media_type'] !== 'film'
+                            ? (
+                                isset($media['isbn'])
+                                ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
+                                : ""
+                            )
+                            : (
+                                isset($media['isan'])
+                                ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
+                                : ""
+                            )
+                        ) . '
+                            <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
+                        </p>';
+                if ($COLLAPSE_CARD_DETAILS) {
+                    echo '</details>';
+                }
 
                 echo '    
                         <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
