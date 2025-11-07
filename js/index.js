@@ -1,5 +1,8 @@
 let isLogin = true;
 function toggleForm() {
+    if (document.getElementById("error-message")){
+        document.getElementById("error-message").remove();
+    }
     const formTitle = document.getElementById('form-title');
     const action = document.getElementById('action');
     const submitBtn = document.getElementById('submit-btn');

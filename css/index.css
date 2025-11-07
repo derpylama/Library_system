@@ -16,6 +16,8 @@ main {
 
 h2 {
     text-align: center;
+    width: fit-content;
+    align-self: center;
 }
 
 input {
@@ -34,4 +36,23 @@ button {
 .toggle {
     text-align: center;
     margin-top: 0.6rem;
+}
+
+header {
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+    justify-content: center;
+}
+
+#back-button {
+    background-color: var(--logout-button-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: none;
+    margin: 0 0 0 1rem;
 }
