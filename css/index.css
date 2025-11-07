@@ -34,6 +34,7 @@ button:disabled {
     margin-top: 20px;
 }
 .card {
+    display: grid;
     background: white;
     max-width: 25rem;
     padding: 1rem;
@@ -47,10 +48,43 @@ button:disabled {
     line-height: 1.2;
 }
 
-.card .description {
-    margin-top: 0.6rem;
-    overflow: auto;
-    height: 2rem;
+/* .media-title-container {
+    display: grid;
+    place-items: center start;
+    width: 100%;
+    max-width: 20rem;
+    height: 2.95rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+    justify-self: center;
+}
+
+.media-title-container h3 {
+    white-space: pre-wrap;
+    word-break: break-word;
+    width: 100%;
+    text-align: center;
+} */
+
+.card .description-wrapper {
+    margin-top: 0.4rem;
+    width: 100%;
+    max-width: 20rem;
+    height: 1.9rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.5rem 0;
+    margin-bottom: 0.4rem;
+}
+
+.card .description-wrapper > .description {
+    white-space: pre-wrap;
+    word-break: break-word;
+    width: 100%;
+    margin: 0;
 }
 
 .card > details {
@@ -109,6 +143,8 @@ button:disabled {
     margin-top: 0.25rem;
     margin-bottom: 0.5rem;
     padding: 0 0.5rem;
+    /* align itself center in the card horizontally */
+    justify-self: center;
 }
 
 .media-title-container h3 {
@@ -116,9 +152,6 @@ button:disabled {
     word-break: break-word; /* forces breaks even in long words */
     width: 100%;
     text-align: center;
-}
-
-.media-title-container h3 span {
 }
 
 .media-image {

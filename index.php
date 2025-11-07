@@ -364,7 +364,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="media-image-container">
                     ' . imageType($media['image_url'], $imageSize) . '
                     </div>
-                    <p class="description">' . nl2br($media['description']) . '</p>
+                    <div class="description-wrapper"><p class="description">' . nl2br($media['description']) . '</p></div>
                     ' . (
                         $COLLAPSE_CARD_DETAILS
                         ? '<details>
@@ -393,7 +393,7 @@ if (isset($_SESSION['user_id'])) {
                     echo '</details>';
                 }
 
-                echo '    
+                echo '<p>  
                         <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
                     </p>
                     ' . ($showsISBNorISAN ? '' : '<br>') . '
