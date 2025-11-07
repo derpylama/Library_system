@@ -32,33 +32,41 @@ function ifDeleteMedia($mediaId = null, $message = null) {
         if ($activeLoansCount > 0 || $copiesCount > 0) {
             // full popup with a confirmation message and a confirm button and a cancel button
             echo '<div class="popup">';
-            echo '<h2>Obs!!!</h2>';
-            echo '<p>You are trying to delete a media that has copies(and has <strong>'. $activeLoansCount .'</strong> borrowed)</p>';
-            echo '<p>if you do this, you will delete all (<strong>' . $copiesCount . '</strong>) copies for this media, also the ones loaned.</p>';
-            echo '<p><strong>Be sure that all fysical books has been returned before continueing.</strong></p>';
-            echo '<p>Are you sure you want to delete <strong>' . $message . '</strong>?</p>';
-            echo '<div class="popup-buttons-container">';
-            echo '<button class="close-button" onclick="this.parentElement.parentElement.classList.add(\'hidden\')">Close</button>';
-            echo '<form method="POST">';
-            echo '<input type="hidden" name="confirmed_delete_media" value="' . htmlspecialchars($mediaId) . '">';
-            echo '<button type="submit" class="confirm-delete-button">Confirm Delete</button>';
-            echo '</form>';
-            echo '</div>';
+                echo '<h2>Obs!!!</h2><!-- tor wanted three -->';
+                // (and has <strong>'. $activeLoansCount .'</strong>borrowed)
+                echo '<p>You are trying to delete a media that has copies' . (
+                    $activeLoansCount > 0
+                    ? ' and <strong>' . $activeLoansCount . '</strong> are borrowed'
+                    : '.'
+                ) . '</p>';
+                echo '<p>if you do this, you will delete all (<strong>' . $copiesCount . '</strong>) copies for this media' . (
+                    $activeLoansCount > 0
+                    ? ' and all active loans associated with them.'
+                    : '.'
+                ) . '</p>';
+                echo '<p><strong>Be sure that all physical books has been returned before continuing.</strong></p>';
+                echo '<p>Are you sure you want to delete <strong>' . $message . '</strong>?</p>';
+                echo '<div class="popup-buttons-container">';
+                    echo '<button class="close-button" onclick="this.parentElement.parentElement.classList.add(\'hidden\')">Close</button>';
+                    echo '<form method="POST">';
+                        echo '<input type="hidden" name="confirmed_delete_media" value="' . htmlspecialchars($mediaId) . '">';
+                        echo '<button type="submit" class="confirm-delete-button">Confirm Delete</button>';
+                    echo '</form>';
+                echo '</div>';
             echo '</div>';
 
         } else {
             echo '<div class="popup">';
-            echo '<h2>Obs!!!</h2>';
-            echo '<p>Are you sure you want to delete <strong>' . $message . '</strong>?</p>';
-            echo '<div class="popup-buttons-container">';
-            echo '<button class="close-button" onclick="this.parentElement.parentElement.classList.add(\'hidden\')">Close</button>';
-            echo '<form method="POST">';
-            echo '<input type="hidden" name="confirmed_delete_media" value="' . htmlspecialchars($mediaId) . '">';
-            echo '<button type="submit" class="confirm-delete-button">Confirm Delete</button>';
-            echo '</form>';
+                echo '<h2>Obs!!!</h2><!-- tor wanted three -->'; 
+                echo '<p>Are you sure you want to delete <strong>' . $message . '</strong>?</p>';
+                echo '<div class="popup-buttons-container">';
+                    echo '<button class="close-button" onclick="this.parentElement.parentElement.classList.add(\'hidden\')">Close</button>';
+                    echo '<form method="POST">';
+                        echo '<input type="hidden" name="confirmed_delete_media" value="' . htmlspecialchars($mediaId) . '">';
+                        echo '<button type="submit" class="confirm-delete-button">Confirm Delete</button>';
+                    echo '</form>';
+                echo '</div>';
             echo '</div>';
-            echo '</div>';
-            
         }
     } else return false;
 }
