@@ -314,9 +314,6 @@ if (isset($_SESSION['user_id'])) {
                     )
                 ) . '
                     <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
-                    <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
-                    <strong>Available:</strong> ' . ($media['available_copies'] ?? 0) . '<br>
-                    <strong>Loaned:</strong> ' . ($media['loaned_copies'] ?? 0) . '
                 </p>';
                     
             echo '    
