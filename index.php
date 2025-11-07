@@ -3,6 +3,7 @@ require_once('php/db.php');
 require_once('php/search.php');
 require_once('php/images.php');
 require_once('php/account.php');
+require_once('php/popup.php');
 
 $COLLAPSE_CARD_DETAILS = false;
 
@@ -138,7 +139,10 @@ if (isset($_SESSION['user_id'])) {
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
     <div id="popup-wrapper" class="popup-wrapper-with-backdrop">
         <?php
-
+            if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['popup_message'])) {
+                $_SESSION['popup_message'] = $_POST['popup_message'];
+                echo popupOutputer();
+            }
             // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
 
         ?>
@@ -415,63 +419,72 @@ if (isset($_SESSION['user_id'])) {
 
         <!-- Account -->
         <section id="account-section" class="my-account-view-section">
-            <h3>Your Account</h3>
-            <?=showAccountButton();?>
-            <?=passwordChangeMessage();?>
+            <div class="section-card">
+                <h3>Your Account</h3>
+                <div class="section-card-content">
+                    <?=showAccountButton();?>
+                    <?=showAccountButton('password');?>
+                </div>
+                <?=passwordChangeMessage();?>
+            </div>
         </section>
 
         <!-- Loans -->
         <section id="loans-section" class="my-account-view-section">
-            <h3>Your Loans</h3>
-            <?php if (empty($userLoans)): ?>
-                <p>You currently have no loans.</p>
-            <?php else: ?>
-                <div class="grid">
-                    <?php foreach ($userLoans as $loan): ?>
-                        <div class="card">
-                            <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
-                            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
-                            <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
-                            <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
-                            <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
-                            <?php if ($loan['status'] === 'active'): ?>
-                                <p>
-                                    <?php
-                                    $days = $loan['days_left'];
-                                    if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
-                                    else echo "Due in $days days";
-                                    ?>
-                                </p>
-                                <form method="POST">
-                                    <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
-                                    <button type="submit">Return Media</button>
-                                </form>
-                            <?php elseif ($loan['status'] === 'returned'): ?>
-                                <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
-                            <?php else: ?>
-                                <p class="overdue">Written off / overdue</p>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+            <div class="section-card">
+                <h3>Your Loans</h3>
+                <?php if (empty($userLoans)): ?>
+                    <p>You currently have no loans.</p>
+                <?php else: ?>
+                    <div class="grid">
+                        <?php foreach ($userLoans as $loan): ?>
+                            <div class="card">
+                                <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
+                                <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
+                                <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
+                                <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
+                                <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
+                                <?php if ($loan['status'] === 'active'): ?>
+                                    <p>
+                                        <?php
+                                        $days = $loan['days_left'];
+                                        if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
+                                        else echo "Due in $days days";
+                                        ?>
+                                    </p>
+                                    <form method="POST">
+                                        <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
+                                        <button type="submit">Return Media</button>
+                                    </form>
+                                <?php elseif ($loan['status'] === 'returned'): ?>
+                                    <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
+                                <?php else: ?>
+                                    <p class="overdue">Written off / overdue</p>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         </section>
 
         <!-- Invoices -->
         <section id="invoices-section" class="my-account-view-section">
-            <h3>Your Invoices</h3>
-            <?php if (empty($invoices)): ?>
-                <p>No invoices.</p>
-            <?php else: ?>
-                <?php foreach ($invoices as $inv): ?>
-                    <div class="invoice">
-                        <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
-                        <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
-                        <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
-                        <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <div class="section-card">
+                <h3>Your Invoices</h3>
+                <?php if (empty($invoices)): ?>
+                    <p>No invoices.</p>
+                <?php else: ?>
+                    <?php foreach ($invoices as $inv): ?>
+                        <div class="invoice">
+                            <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
+                            <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
+                            <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
+                            <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </section>
     </section>
 </body>
