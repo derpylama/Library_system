@@ -3,7 +3,9 @@ require_once('db.php');
 require_once('get_recomendations.php');
 
 // Fetch recommendations
-$recommendations = getRecommendations($pdo, 2, 50, 10, true, 0.7);
+$userid=2;
+$recommendations = getRecommendations($pdo, $userid, 50, 10, true, 0.7);
+
 
 // Fetch media details
 $mediaList = [];
@@ -122,7 +124,7 @@ h2 {
 </style>
 </head>
 <body>
-<section> 
+
 <h2>Recommended for You</h2>
 <div class="carousel-container" id="carousel-container">
     <div class="arrow arrow-left">&#8249;</div>
@@ -136,7 +138,7 @@ h2 {
         <?php endforeach; ?>
     </div>
 </div>
-</section>
+
 <script>
 const carousel = document.getElementById('carousel');
 const container = document.getElementById('carousel-container');

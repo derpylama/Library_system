@@ -1,0 +1,87 @@
+
+.carousel-container {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 350px; /* set the carousel height */
+    background-color:rgb(116, 65, 65);
+    border-radius: 2px;
+}
+
+.recommendation-row {
+    display: flex;
+    gap: 12px;
+    height: 100%;
+    align-items: center; /* center the cards vertically */
+}
+
+.favorite-media-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+}
+
+.favorite-media-card {
+    width: 180px;
+    min-width: 180px;
+    flex: 0 0 auto;
+    background-color: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 6px;
+    overflow: hidden;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    height: 85%;
+    margin: 0 auto;
+
+}
+
+.favorite-media-card img {
+    width: 100%;
+    height: 85%; /* fixed proportion of card height */
+    object-fit: cover; /* crop rather than stretching */
+    border-bottom: 1px solid #3c3c3c;
+}
+
+.favorite-media-card .title {
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #dcdcaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    background-color: #252526;
+    height: 15%; /* title takes remaining height */
+    display: block;
+    align-items: center; /* vertically center title */
+
+}
+
+
+/* Arrows */
+.arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 60px;
+    background-color: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 30px;
+    text-align: center;
+    line-height: 60px;
+    cursor: pointer;
+    z-index: 10;
+    border-radius: 4px;
+    user-select: none;
+}
+.arrow-left { left: 0; }
+.arrow-right { right: 0; }
+.arrow.hidden { display: none; }

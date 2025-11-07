@@ -3,6 +3,7 @@ require_once('php/db.php');
 require_once('php/search.php');
 require_once('php/images.php');
 require_once('php/account.php');
+require_once('php/get_recomendations.php');
 
 $COLLAPSE_CARD_DETAILS = false;
 
@@ -72,7 +73,18 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
+// MARK: RECOMMENDATIONS
+$recommendations = getRecommendations($pdo, $userId, 50, 10, true, 0.7);
 
+
+// Fetch media details
+$mediaList = [];
+if (!empty($recommendations)) {
+    $inQuery = implode(',', array_fill(0, count($recommendations), '?'));
+    $stmt = $pdo->prepare("SELECT image_url, title  FROM media WHERE id IN ($inQuery) ORDER BY FIELD(id, $inQuery)");
+    $stmt->execute(array_merge($recommendations, $recommendations));
+    $mediaList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 // Fetch all media
 $mediaQuery = "
@@ -132,7 +144,9 @@ if (isset($_SESSION['user_id'])) {
     <title>User Dashboard</title>
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/recomendation.css">
     <script src="js/index.js"></script>
+    <script src="js/recomendation.js" defer></script>
 </head>
 <body>
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
@@ -201,6 +215,23 @@ if (isset($_SESSION['user_id'])) {
                 </select>
                 <button type="submit">Search</button>
             </form>
+        </div>
+
+                <?php 
+                // MARK: RECOMMENDATIONS
+                ?>
+        <h2>Recommended for You</h2> 
+        <div class="carousel-container" id="carousel-container">
+            <div class="arrow arrow-left">&#8249;</div>
+            <div class="arrow arrow-right">&#8250;</div>
+            <div class="recommendation-row" id="carousel">
+                <?php foreach ($mediaList as $media): ?>
+                    <div class="favorite-media-card">
+                        <img src="<?= htmlspecialchars($media['image_url']) ?>" alt="<?= htmlspecialchars($media['title']) ?>">
+                        <div class="title"><?= htmlspecialchars($media['title']) ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
 
         <div class="grid">
