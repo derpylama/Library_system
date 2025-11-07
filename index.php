@@ -380,22 +380,7 @@ if (isset($_SESSION['user_id'])) {
                         )
                     ) . '
                         <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
-                        <strong>Total:</strong> ' . ($media['total_copies'] ?? 0) . '<br>
-                        <strong>Available:</strong> ' . ($media['available_copies'] ?? 0) . '<br>
-                        <strong>Loaned:</strong> ' . ($media['loaned_copies'] ?? 0) . '
                     </p>';
-
-                    if (isset($_SESSION['user_id'])) {
-                        echo '
-                        <form method="POST">
-                            <input type="hidden" name="media_id" value="' . $media['id'] . '">
-                            <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
-                                ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
-                            </button>
-                        </form>';
-                    }else{
-                        echo '<button class="media-loan-button" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '</button>';
-                    }
 
                 echo '    
                         <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
