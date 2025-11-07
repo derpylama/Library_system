@@ -354,7 +354,7 @@ if (isset($_SESSION['user_id'])) {
             <?=passwordChangeMessage();?>
         </section>
 
-        <!-- Invoices -->
+        <!-- Loans -->
         <section id="loans-section" class="my-account-view-section">
             <h3>Your Loans</h3>
             <?php if (empty($userLoans)): ?>
