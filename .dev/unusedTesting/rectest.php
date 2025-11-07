@@ -44,7 +44,7 @@ h2 {
     gap: 12px;
 }
 
-.media-card {
+.favorite-media-card {
     width: 180px; /* fixed width */
     min-width: 180px; /* ensures flex items stay uniform */
     flex: 0 0 auto;
@@ -57,17 +57,17 @@ h2 {
     transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 4px rgba(0,0,0,0.6);
 }
-.media-card:hover {
+.favorite-media-card:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0,0,0,0.8);
 }
-.media-card img {
+.favorite-media-card img {
     width: 100%;
     height: 270px;
     object-fit: cover;
     border-bottom: 1px solid #3c3c3c;
 }
-.media-card .title {
+.favorite-media-card .title {
     padding: 8px;
     font-size: 14px;
     font-weight: 500;
@@ -110,7 +110,7 @@ h2 {
     <div class="arrow arrow-right">&#8250;</div>
     <div class="recommendation-row" id="carousel">
         <?php foreach ($mediaList as $media): ?>
-            <div class="media-card">
+            <div class="favorite-media-card">
                 <img src="<?= htmlspecialchars($media['image_url']) ?>" alt="<?= htmlspecialchars($media['title']) ?>">
                 <div class="title"><?= htmlspecialchars($media['title']) ?></div>
             </div>
