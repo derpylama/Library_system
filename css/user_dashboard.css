@@ -196,3 +196,10 @@ button:disabled {
 #my-account-view > section {
     margin-top: 2rem;
 }
+
+#typefilter {
+    background-color: white;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+}
