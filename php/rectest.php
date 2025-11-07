@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../../php/db.php';
-require_once 'get_rec2.php';
+require_once('db.php');
+require_once('get_recomendations.php');
 
 // Fetch recommendations
 $recommendations = getRecommendations($pdo, 2, 50, 10, true, 0.7);
@@ -122,7 +122,7 @@ h2 {
 </style>
 </head>
 <body>
-
+<section> 
 <h2>Recommended for You</h2>
 <div class="carousel-container" id="carousel-container">
     <div class="arrow arrow-left">&#8249;</div>
@@ -136,7 +136,7 @@ h2 {
         <?php endforeach; ?>
     </div>
 </div>
-
+</section>
 <script>
 const carousel = document.getElementById('carousel');
 const container = document.getElementById('carousel-container');
@@ -205,7 +205,6 @@ function animateScroll(newScrollPos, callback) {
         isAnimating = false; // unlock buttons
         if (callback) callback();
     }, animationDuration);
-    console.log('Animating to', newScrollPos);
 }
 
 leftArrow.addEventListener('click', () => {
