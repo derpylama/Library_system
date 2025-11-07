@@ -271,6 +271,7 @@ $loans = $pdo->query("
             <button id="media-btn" class="nav-button" onclick="showTab('media')">Media</button>
             <button id="copies-btn" class="nav-button" onclick="showTab('copies')">Copies</button>
             <button id="loans-btn" class="nav-button" onclick="showTab('loans')">Loans</button>
+            <button id="loans-btn" class="nav-button" onclick="showTab('others')">Others</button>
             <a href="index.php" class="back action-button">← Back to User view</a>
         </nav>
 
@@ -521,7 +522,6 @@ $loans = $pdo->query("
             </table>
         </div>
 
-
         <!-- LOANS TAB -->
         <div id="loans" class="tab hidden">
             <h2>Loans</h2>
@@ -546,6 +546,64 @@ $loans = $pdo->query("
                 </tr>
                 <?php endforeach; ?>
             </table>
+        </div>
+
+        <!-- OTHERS TAB -->
+        <div id="others" class="tab hidden">
+            <h2>Others</h2>
+            <p>Additional administrative functions can be added here.</p>
+            <section id="features_flags">
+                <h3>Options</h3>
+                <fieldset>
+                    <form method="POST" action="php/toggle_features.php">
+                        <input type="hidden" name="toggle_features" value="1">
+                        <label>
+                            <?php
+                            // CREATE TABLE options (
+                            //     key VARCHAR(255) PRIMARY KEY,
+                            //     value VARCHAR(255) DEFAULT NULL,
+                            //     type VARCHAR(50) DEFAULT NULL
+                            // );
+
+                            // foreach then switch-case for each type: string, bool, boolean, int, float
+                            $getFeaturesSQL = "SELECT * FROM options";
+                            $features = $pdo->query($getFeaturesSQL)->fetchAll();
+                            foreach ($features as $feature) {
+                                $key = htmlspecialchars($feature['name']);
+                                $value = $feature['value'];
+                                $type = $feature['type'];
+
+                                $name = $feature['label'] ?? str_replace('_', ' ', $key);
+
+                                echo "<label>
+                                    " . ucfirst($name) . ": 
+                                    ";
+                                    
+                                    switch ($type) {
+                                        case 'boolean':
+                                        case 'bool':
+                                            $checked = ($value === '1' || strtolower($value) === 'true') ? 'checked' : '';
+                                            echo '<input type="checkbox" name="feature_' . $key . '" ' . $checked . '><br>';
+                                            break;
+                                        case 'int':
+                                            echo '<input type="number" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            break;
+                                        case 'float':
+                                            echo '<input type="number" step="0.01" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            break;
+                                        case 'string':
+                                        default:
+                                            echo '<input type="text" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            break;
+                                    }
+                                echo "</label><br>"; 
+                            }
+                            ?>
+                        </label>
+                        <button type="submit">Save</button>
+                    </form>
+                </
+            </section>
         </div>
     </main>
 </body>
