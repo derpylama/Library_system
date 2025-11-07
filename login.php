@@ -1,9 +1,6 @@
 <?php
 session_start();
-if (isset($_SESSION['user_id'])) {
-    header('Location: index.php');
-    exit;
-}
+
 ?>
 
 <!DOCTYPE html>
@@ -17,7 +14,12 @@ if (isset($_SESSION['user_id'])) {
 </head>
 <body>
     <main>
-        <h2 id="form-title">Login</h2>
+        <a href="./index.php" id="back-button">Back</a>
+        <header>
+            <h2 id="form-title">Login</h2>
+        </header>
+
+        <?php if(isset($_GET['error'])) echo '<p style="color:red;" id="error-message">' . htmlspecialchars($_GET['error']) . '</p>'; ?>
 
         <?php if(isset($_GET['registered'])) echo '<p style="color:green;">Registration successful! You can now log in.</p>'; ?>
 
