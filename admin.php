@@ -383,7 +383,7 @@ $loans = $pdo->query("
                     <th>Title</th>
                     <th>Author</th>
                     <th>Media Type</th>
-                    <th>Image Url</th>
+                    <th>Image</th>
                     <th>SAB</th>
                     <th>Description</th>
                     <th>Price</th>
@@ -475,10 +475,10 @@ $loans = $pdo->query("
                     <th>Actions</th>
                 </tr>
                 <?php
-                $copies = $pdo->query("SELECT id, media_id, barcode, status FROM copy ORDER BY id DESC")->fetchAll();
+                $copies = $pdo->query("SELECT copy.id, copy.media_id, copy.barcode, copy.status, media.id, media.title FROM `copy` JOIN media ON copy.media_id = media.id")->fetchAll();
                 foreach ($copies as $cp): ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($cp['media_id']); ?></td>
+                    <td><?php echo htmlspecialchars($cp['title']); ?></td>
                     <td><?php echo htmlspecialchars($cp['barcode']); ?></td>
                     <td><?php echo htmlspecialchars($cp['status']); ?></td>
                     <td>
