@@ -150,11 +150,15 @@ setupInfiniteScroll();
 function scrollCarousel() {
     scrollPos += scrollSpeed;
     const firstCardWidth = carousel.children[0].offsetWidth + 12;
+
     if (scrollPos >= firstCardWidth) {
         carousel.appendChild(carousel.children[0]);
         scrollPos -= firstCardWidth;
     }
-    carousel.style.transform = `translateX(-${scrollPos}px)`;
+
+    // ✅ Add 1 extra card width so there’s always a card on the left
+    carousel.style.transform = `translateX(-${scrollPos + firstCardWidth}px)`;
+
     animationFrame = requestAnimationFrame(scrollCarousel);
 }
 
@@ -167,21 +171,53 @@ container.addEventListener('mouseleave', () => animationFrame = requestAnimation
 
 // Arrow manual scroll
 const cardWidth = carousel.children[0]?.offsetWidth + 12 || 192;
+
+let isAnimating = false; // lock to prevent spamming
+const firstCardWidth = carousel.children[0].offsetWidth + 12;
+const animationDuration = 200; // milliseconds
+
+function animateScroll(newScrollPos, callback) {
+    isAnimating = true; // lock buttons
+    carousel.style.transition = `transform ${animationDuration}ms ease`;
+    carousel.style.transform = `translateX(-${newScrollPos + firstCardWidth}px)`;
+
+    setTimeout(() => {
+        carousel.style.transition = '';
+        isAnimating = false; // unlock buttons
+        if (callback) callback();
+    }, animationDuration);
+}
+
 leftArrow.addEventListener('click', () => {
-    scrollPos -= cardWidth;
+    if (isAnimating) return; // ignore clicks while animating
+
+    scrollPos -= firstCardWidth;
+
     if (scrollPos < 0) {
-        carousel.insertBefore(carousel.lastElementChild, carousel.firstElementChild);
-        scrollPos += cardWidth;
+        animateScroll(scrollPos, () => {
+            carousel.insertBefore(carousel.lastElementChild, carousel.firstElementChild);
+            scrollPos += firstCardWidth;
+            carousel.style.transform = `translateX(-${scrollPos + firstCardWidth}px)`;
+        });
+    } else {
+        animateScroll(scrollPos);
     }
-    carousel.style.transform = `translateX(-${scrollPos}px)`;
 });
+
 rightArrow.addEventListener('click', () => {
-    scrollPos += cardWidth;
-    if (scrollPos >= cardWidth) {
-        carousel.appendChild(carousel.children[0]);
-        scrollPos -= cardWidth;
+    if (isAnimating) return; // ignore clicks while animating
+
+    scrollPos += firstCardWidth;
+
+    if (scrollPos >= firstCardWidth) {
+        animateScroll(scrollPos, () => {
+            carousel.appendChild(carousel.children[0]);
+            scrollPos -= firstCardWidth;
+            carousel.style.transform = `translateX(-${scrollPos + firstCardWidth}px)`;
+        });
+    } else {
+        animateScroll(scrollPos);
     }
-    carousel.style.transform = `translateX(-${scrollPos}px)`;
 });
 
 // Hide arrows if not needed
