@@ -46,13 +46,12 @@ header {
 }
 
 #back-button {
-    background-color: var(--logout-button-color);
+    background-color: var(--button-color);
+    border: 3px solid blue;
     color: white;
-    border: none;
     padding: 0.5rem 0.75rem;
     border-radius: 0.3rem;
     cursor: pointer;
     font-size: 0.95rem;
     text-decoration: none;
-    margin: 0 0 0 1rem;
 }
