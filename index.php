@@ -216,14 +216,30 @@ if (isset($_SESSION['user_id'])) {
                                     // Append to total score
                                     $totalScore += $match['score'];
 
-                                    // Highlight match in value
+                                    // Get
                                     $start = $match['index'];
                                     $length = $match['length'];
                                     $before = htmlspecialchars(mb_substr($value, 0, $start));
                                     $matchText = htmlspecialchars(mb_substr($value, $start, $length));
                                     $after = htmlspecialchars(mb_substr($value, $start + $length));
-                                    $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
-                                    $media[$field] = $value;
+
+                                    // Validate so we arent inside another highlight or trying to highlight somewhere inside a '<span class="search-highlight">' or '</span>'
+                                    $isValidLocation = true;
+                                    // Check so we arent inside another highlight tags
+                                    $highlightStartTag = '<span class="search-highlight">';
+                                    $highlightEndTag = '</span>';
+                                    // Get indexes of all highlight-start and highlight-end tags and check if our match is inside any of them fully
+                                    // MARK: TODO:...
+
+                                    // Iterate all previous matches where we have same field and check if our index+len is inside any of their index+len, if so invalidate.
+                                    //   If our match overlaps out of the other match its still valid but we should not highlight the overlapping part, i.e change index if we overlap at end and change length if we overlap at start.
+                                    // MARK: TODO:...
+
+                                    // Highlight match in value
+                                    if ($isValidLocation === true) {
+                                        $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
+                                        $media[$field] = $value;
+                                    }
 
                                     // Mark as found
                                     $foundField = true;
