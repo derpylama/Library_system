@@ -37,16 +37,26 @@ h2 {
     position: relative;
     overflow: hidden;
     width: 100%;
+    height: 350px; /* set the carousel height */
+    background-color:rgb(116, 65, 65);
+    border-radius: 2px;
 }
 
 .recommendation-row {
     display: flex;
     gap: 12px;
+    height: 100%;
+    align-items: center; /* center the cards vertically */
+}
+
+.favorite-media-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
 }
 
 .favorite-media-card {
-    width: 180px; /* fixed width */
-    min-width: 180px; /* ensures flex items stay uniform */
+    width: 180px;
+    min-width: 180px;
     flex: 0 0 auto;
     background-color: #252526;
     border: 1px solid #3c3c3c;
@@ -56,27 +66,36 @@ h2 {
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    height: 85%;
+    margin: 0 auto;
+
 }
-.favorite-media-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-}
+
 .favorite-media-card img {
     width: 100%;
-    height: 270px;
-    object-fit: cover;
+    height: 85%; /* fixed proportion of card height */
+    object-fit: cover; /* crop rather than stretching */
     border-bottom: 1px solid #3c3c3c;
 }
+
 .favorite-media-card .title {
     padding: 8px;
     font-size: 14px;
     font-weight: 500;
     color: #dcdcaa;
-    white-space: nowrap; /* prevents wrapping */
-    overflow: hidden;    /* hide overflow */
-    text-overflow: ellipsis; /* adds ... */
-    width: calc(100% - 16px); /* ensures padding is included */
-    box-sizing: border-box;   /* include padding in width */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    background-color: #252526;
+    height: 15%; /* title takes remaining height */
+    display: block;
+    align-items: center; /* vertically center title */
+
 }
 
 
@@ -186,6 +205,7 @@ function animateScroll(newScrollPos, callback) {
         isAnimating = false; // unlock buttons
         if (callback) callback();
     }, animationDuration);
+    console.log('Animating to', newScrollPos);
 }
 
 leftArrow.addEventListener('click', () => {
