@@ -4,7 +4,7 @@ require_once('php/search.php');
 require_once('php/images.php');
 require_once('php/account.php');
 
-session_start();
+@session_start();
 
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
@@ -334,6 +334,7 @@ if (isset($_SESSION['user_id'])) {
     <!-- My Loans View -->
     <div id="loans-view" class="hidden">
     <?=showAccountButton();?>
+    <?=passwordChangeMessage();?>
     <h3>My Loans</h3>
     <?php if (empty($userLoans)): ?>
         <p>You currently have no loans.</p>

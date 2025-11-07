@@ -1,8 +1,10 @@
 <?php
-require_once('db.php');
 
 function showAccountButton() {
     // Track toggle state in session
+    if (!isset($_SESSION['change_password_message'])) {
+        $_SESSION['change_password_message'] = '';
+    }
     if (!isset($_SESSION['show_change_password'])) {
         $_SESSION['show_change_password'] = false;
     }
@@ -17,7 +19,7 @@ function showAccountButton() {
 
     // Display the button
     echo '
-    <form method="POST">
+    <form method="POST" class="change-password-button">
         <button type="submit" name="toggle_change_password">' . $buttonText . '</button>
     </form>
     ';
@@ -30,8 +32,9 @@ function showAccountButton() {
 
 function editAccount() {
     echo '
-    <h2>Change Password</h2>
-    <form method="POST">
+    <div class="change-password-container card">
+    <h2 class="change-password-header">Change Password</h2>
+    <form method="POST" class="change-password-form">
         <input type="hidden" name="action" value="change_password">
 
         <label for="old_password">Old Password:</label><br>
@@ -45,17 +48,36 @@ function editAccount() {
 
         <button type="submit">Change Password</button>
     </form>
+    </div>
     ';
 }
 
+function passwordChangeMessage() {
+    if (isset($_SESSION['change_password_message']) && $_SESSION['change_password_message'] !== '') {
+        if ($_SESSION['change_password_message'] === 'Password changed successfully.') {
+            echo '<p class="change-password-message success-card">' . $_SESSION['change_password_message'] . '</p>';
+        } else {
+            echo '<p class="change-password-message error-card">' . $_SESSION['change_password_message'] . '</p>';
+        }
+        // Clear the message after displaying
+        $_SESSION['change_password_message'] = '';
+    }
+}
+
 // Handle password change
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') { 
+    require_once('db.php');
+    // if session not started, start it
+    if (session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
+
     $userId = $_SESSION['user_id'];
     $oldPassword = $_POST['old_password'];
     $newPassword = $_POST['new_password'];
     $confirmPassword = $_POST['confirm_password'];
 
-    // Hash passwords
+    // Get sha256 of the passwords
     $oldPasswordHash = hash('sha256', $oldPassword);
     $newPasswordHash = hash('sha256', $newPassword);
 
@@ -64,16 +86,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt->execute([$userId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && $oldPasswordHash === $user['passwordhash']) {
+    if ($user && ($oldPasswordHash === $user['passwordhash'])) {
         if ($newPassword === $confirmPassword) {
             // Update password in database
             $update = $pdo->prepare('UPDATE user SET passwordhash = ? WHERE id = ?');
             $update->execute([$newPasswordHash, $userId]);
-            echo 'Password changed successfully.';
+            $_SESSION['change_password_message'] = 'Password changed successfully.';
         } else {
-            echo 'New passwords do not match.';
+            $_SESSION['change_password_message'] = 'New passwords do not match.';
         }
     } else {
-        echo 'Old password is incorrect.';
+        $_SESSION['change_password_message'] = 'Old password is incorrect.';
     }
+    
 }

@@ -133,6 +133,58 @@ button:disabled {
     cursor: not-allowed;
 }
 
+.change-password-button, .change-password-form, .change-password-header {
+    margin-top: 1rem;
+    margin-right: 1rem;
+    justify-self: right;
+}
+.change-password-header {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    margin-right: 3rem;
+}
+
+.change-password-form input {
+    margin-bottom: 0.5rem;
+    padding: 0.4rem;
+    border-radius: 0.3rem;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+    margin-right: 2rem;
+}
+.change-password-form label {
+    font-weight: bold;
+    margin-right: 2rem;
+}
+.change-password-container {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-self: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    border: 3px solid #ccc;
+    padding: 0 0.5rem 1rem 1.7rem;
+    border-radius: 1rem;
+    
+}
+.change-password-message {
+    margin-top: 0.5rem;
+    background: #e6ffe6;
+    border: 1px solid #b3ddb3;
+    padding: 0.625rem;
+    justify-self: flex-end;
+    border-radius: 0.5rem;
+}
+.error-card {
+    background: #fff0f0;
+    border: 1px solid #ffb3b3;
+}
+.success-card {
+    background: #e6ffe6;
+    border: 1px solid #b3ddb3;
+}
 #top-menu-message {
     margin-top: 1rem;
     background: #ff4141;
