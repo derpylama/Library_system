@@ -168,7 +168,7 @@ if (isset($_SESSION['user_id'])) {
     <div class="search-bar">
         <form method="GET" action="index.php">
             <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
-            <select name="typefilter">
+            <select name="typefilter" id="typefilter">
                 
                 <!--
                 <option value="all">All Types</option>
