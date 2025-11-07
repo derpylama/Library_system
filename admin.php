@@ -2,6 +2,7 @@
 require_once('php/db.php');
 require_once('php/barcode.php');
 require_once('php/images.php');
+require_once('php/popup.php');
 
 session_start();
 
@@ -247,7 +248,7 @@ $loans = $pdo->query("
         <?php
 
             // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
-
+            popupOutputer();
         ?>
     </div>
 

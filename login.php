@@ -9,7 +9,7 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Login</title>
-    <link rel="stylesheet" href="./css/index.css">
+    <link rel="stylesheet" href="./css/login.css">
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
@@ -35,6 +35,6 @@ session_start();
         </div>
     </main>
 
-    <script src="./js/index.js"></script>
+    <script src="./js/login.js"></script>
 </body>
 </html>

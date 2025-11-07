@@ -128,9 +128,9 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <title>User Dashboard</title>
-    <link rel="stylesheet" href="css/user_dashboard.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/user_dashboard.js"></script>
+    <script src="js/index.js"></script>
 </head>
 <body>
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
@@ -155,244 +155,258 @@ if (isset($_SESSION['user_id'])) {
         <div>
             <?php
                 if (isset($_SESSION['user_id']) && $isAdmin) {
-                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'media\')">All Media</button>';
-                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'loans\')">My Account</button>';
+                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'all-media-view\')">All Media</button>';
+                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'my-account-view\')">My Account</button>';
                     echo '<a href="admin.php" class="toggle-btn admin-button">Admin Panel</a>';
                     echo '<a href="./logout.php" class="toggle-btn logout-button">Logout</a>';
                 }
                 else if (isset($_SESSION['user_id'])) {
-                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'media\')">All Media</button>';
-                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'loans\')">My Account</button>';
+                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'all-media-view\')">All Media</button>';
+                    echo '<button class="toggle-btn nav-button" id="my-account-button" onclick="toggleView(\'my-account-view\')">My Account</button>';
                     echo '<a href="./logout.php" class="toggle-btn logout-button">Logout</a>';
                 }
                 else {
-                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'media\')">All Media</button>';
+                    echo '<button class="toggle-btn nav-button" id="all-media-button" onclick="toggleView(\'all-media-view\')">All Media</button>';
                     echo '<a href="login.php" class="toggle-btn nav-button">Login</a>';
                 }
             ?>
         </div>
     </header>
 
-    <!-- search bar -->
-    <div class="search-bar">
-        <form method="GET" action="index.php">
-            <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
-            <select name="typefilter">
-                
-                <!--
-                <option value="all">All Types</option>
-                <option value="book">Books</option>
-                <option value="audiobook">Audiobooks</option>
-                <option value="film">Films</option>
-                -->
-
-                <?php
-                // Select if $_GET typefilter is set
-                $typefilter = isset($_GET['typefilter']) ? $_GET['typefilter'] : 'all';
-                echo '<option value="all"' . ($typefilter === 'all' ? ' selected' : '') . '>All Types</option>';
-                echo '<option value="bok"' . ($typefilter === 'bok' ? ' selected' : '') . '>Books</option>';
-                echo '<option value="ljudbok"' . ($typefilter === 'ljudbok' ? ' selected' : '') . '>Audiobooks</option>';
-                echo '<option value="film"' . ($typefilter === 'film' ? ' selected' : '') . '>Films</option>';
-                ?>
-            </select>
-            <button type="submit">Search</button>
-        </form>
-    </div>
-
     <!-- All Media View -->
-    <div id="media-view" class="grid">
+    <section id="all-media-view">
 
-        <?php
-        $filteredMediaList = []; // Maps [-1/score, <media>]
-        foreach ($mediaList as $media) {
-
-            $totalScore = 0;
-
-            // Iterate each field, does it exists as a match in a search result? If so highlight the matching part
-            //   also keep track if this media had any matches at all in search results if not and search result is not empty skip it
-            // $searchResults = [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
-            if (count($searchResults) > 0) {
-                $foundInSearch = false;
-
-                foreach ($media as $field => $value) {
-                    $foundField = false;
+        <!-- search bar -->
+        <div class="search-bar">
+            <form method="GET" action="index.php">
+                <input type="text" name="q" placeholder="Search media..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+                <select name="typefilter">
                     
-                    // Find if this media has matches in search results
-                    foreach ($searchResults as $result) {
-                        if ($result['mediaId'] == $media['id']) {
-                            // Check matches for this field
-                            foreach ($result['matches'] as $match) {
-                                if ($match['field'] === $field) {
-                                    // Append to total score
-                                    $totalScore += $match['score'];
+                    <!--
+                    <option value="all">All Types</option>
+                    <option value="book">Books</option>
+                    <option value="audiobook">Audiobooks</option>
+                    <option value="film">Films</option>
+                    -->
 
-                                    // Get
-                                    $start = $match['index'];
-                                    $length = $match['length'];
-                                    $before = htmlspecialchars(mb_substr($value, 0, $start));
-                                    $matchText = htmlspecialchars(mb_substr($value, $start, $length));
-                                    $after = htmlspecialchars(mb_substr($value, $start + $length));
+                    <?php
+                    // Select if $_GET typefilter is set
+                    $typefilter = isset($_GET['typefilter']) ? $_GET['typefilter'] : 'all';
+                    echo '<option value="all"' . ($typefilter === 'all' ? ' selected' : '') . '>All Types</option>';
+                    echo '<option value="bok"' . ($typefilter === 'bok' ? ' selected' : '') . '>Books</option>';
+                    echo '<option value="ljudbok"' . ($typefilter === 'ljudbok' ? ' selected' : '') . '>Audiobooks</option>';
+                    echo '<option value="film"' . ($typefilter === 'film' ? ' selected' : '') . '>Films</option>';
+                    ?>
+                </select>
+                <button type="submit">Search</button>
+            </form>
+        </div>
 
-                                    // Validate so we arent inside another highlight or trying to highlight somewhere inside a '<span class="search-highlight">' or '</span>'
-                                    $isValidLocation = true;
-                                    // Check so we arent inside another highlight tags
-                                    $highlightStartTag = '<span class="search-highlight">';
-                                    $highlightEndTag = '</span>';
-                                    // Get indexes of all highlight-start and highlight-end tags and check if our match is inside any of them fully
-                                    // MARK: TODO:...
+        <div class="grid">
+            
+            <?php
+            $filteredMediaList = []; // Maps [-1/score, <media>]
+            foreach ($mediaList as $media) {
 
-                                    // Iterate all previous matches where we have same field and check if our index+len is inside any of their index+len, if so invalidate.
-                                    //   If our match overlaps out of the other match its still valid but we should not highlight the overlapping part, i.e change index if we overlap at end and change length if we overlap at start.
-                                    // MARK: TODO:...
+                $totalScore = 0;
 
-                                    // Highlight match in value
-                                    if ($isValidLocation === true) {
-                                        $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
-                                        $media[$field] = $value;
+                // Iterate each field, does it exists as a match in a search result? If so highlight the matching part
+                //   also keep track if this media had any matches at all in search results if not and search result is not empty skip it
+                // $searchResults = [{mediaId, score, matches=[{field,index,length,score,token},...]},...]
+                if (count($searchResults) > 0) {
+                    $foundInSearch = false;
+
+                    foreach ($media as $field => $value) {
+                        $foundField = false;
+                        
+                        // Find if this media has matches in search results
+                        foreach ($searchResults as $result) {
+                            if ($result['mediaId'] == $media['id']) {
+                                // Check matches for this field
+                                foreach ($result['matches'] as $match) {
+                                    if ($match['field'] === $field) {
+                                        // Append to total score
+                                        $totalScore += $match['score'];
+
+                                        // Get
+                                        $start = $match['index'];
+                                        $length = $match['length'];
+                                        $before = htmlspecialchars(mb_substr($value, 0, $start));
+                                        $matchText = htmlspecialchars(mb_substr($value, $start, $length));
+                                        $after = htmlspecialchars(mb_substr($value, $start + $length));
+
+                                        // Validate so we arent inside another highlight or trying to highlight somewhere inside a '<span class="search-highlight">' or '</span>'
+                                        $isValidLocation = true;
+                                        // Check so we arent inside another highlight tags
+                                        $highlightStartTag = '<span class="search-highlight">';
+                                        $highlightEndTag = '</span>';
+                                        // Get indexes of all highlight-start and highlight-end tags and check if our match is inside any of them fully
+                                        // MARK: TODO:...
+
+                                        // Iterate all previous matches where we have same field and check if our index+len is inside any of their index+len, if so invalidate.
+                                        //   If our match overlaps out of the other match its still valid but we should not highlight the overlapping part, i.e change index if we overlap at end and change length if we overlap at start.
+                                        // MARK: TODO:...
+
+                                        // Highlight match in value
+                                        if ($isValidLocation === true) {
+                                            $value = $before . '<span class="search-highlight">' . $matchText . '</span>' . $after;
+                                            $media[$field] = $value;
+                                        }
+
+                                        // Mark as found
+                                        $foundField = true;
+                                        $foundInSearch = true;
                                     }
-
-                                    // Mark as found
-                                    $foundField = true;
-                                    $foundInSearch = true;
                                 }
                             }
                         }
+
+                        // If not htmlspecialchars the value
+                        if (!$foundField) {
+                            $media[$field] = htmlspecialchars($value);
+                        }
+
                     }
 
-                    // If not htmlspecialchars the value
-                    if (!$foundField) {
-                        $media[$field] = htmlspecialchars($value);
+                    if (!$foundInSearch) {
+                        continue; // Skip this media, no matches found
                     }
-
                 }
 
-                if (!$foundInSearch) {
-                    continue; // Skip this media, no matches found
+                // If $_GET typefilter is set filter by media type
+                if (isset($_GET['typefilter']) && $_GET['typefilter'] !== 'all') {
+                    if ($media['media_type'] !== $_GET['typefilter']) {
+                        continue; // Skip this media, type does not match filter
+                    }
                 }
+
+                $filteredMediaList[] = [$totalScore, $media];
             }
 
-            // If $_GET typefilter is set filter by media type
-            if (isset($_GET['typefilter']) && $_GET['typefilter'] !== 'all') {
-                if ($media['media_type'] !== $_GET['typefilter']) {
-                    continue; // Skip this media, type does not match filter
+            // Sort $filteredMediaList by score descending
+            usort($filteredMediaList, function($a, $b) {
+                return $b[0] <=> $a[0];
+            });
+
+            foreach ($filteredMediaList as $mediaWithScore) {
+                $media = $mediaWithScore[1];
+
+                if (isset($media["image_width"]) && isset($media["image_height"])) {
+                    $imageSize = [intval($media["image_width"]), intval($media["image_height"])];
+                } else {
+                    $imageSize = getImageSizeW($media['image_url']);
                 }
+
+                $showsISBNorISAN = ($media['media_type'] !== 'film') ? isset($media['isbn']) : isset($media['isan']);
+
+                echo '
+                <div class="card" '.cardSize($imageSize).'>
+                    <div class="media-title-container">
+                        <h3>' . $media['title'] . '</h3>
+                    </div>
+                    <div class="media-image-container">
+                    ' . imageType($media['image_url'], $imageSize) . '
+                    </div>
+                    <p class="description">' . nl2br($media['description']) . '</p>
+                    <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
+                    <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
+                    <p>
+                    ' . (
+                        $media['media_type'] !== 'film'
+                        ? (
+                            isset($media['isbn'])
+                            ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
+                            : ""
+                        )
+                        : (
+                            isset($media['isan'])
+                            ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
+                            : ""
+                        )
+                    ) . '
+                        <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
+                    </p>';
+                        
+                echo '    
+                        <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
+                    </p>
+                    ' . ($showsISBNorISAN ? '' : '<br>') . '
+                    <form method="POST">
+                        <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                        <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                            ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                        </button>
+                    </form>
+                </div>
+                ';
             }
-
-            $filteredMediaList[] = [$totalScore, $media];
-        }
-
-        // Sort $filteredMediaList by score descending
-        usort($filteredMediaList, function($a, $b) {
-            return $b[0] <=> $a[0];
-        });
-
-        foreach ($filteredMediaList as $mediaWithScore) {
-            $media = $mediaWithScore[1];
-
-            if (isset($media["image_width"]) && isset($media["image_height"])) {
-                $imageSize = [intval($media["image_width"]), intval($media["image_height"])];
-            } else {
-                $imageSize = getImageSizeW($media['image_url']);
-            }
-
-            $showsISBNorISAN = ($media['media_type'] !== 'film') ? isset($media['isbn']) : isset($media['isan']);
-
-            echo '
-            <div class="card" '.cardSize($imageSize).'>
-                <div class="media-title-container">
-                    <h3>' . $media['title'] . '</h3>
-                </div>
-                <div class="media-image-container">
-                ' . imageType($media['image_url'], $imageSize) . '
-                </div>
-                <p class="description">' . nl2br($media['description']) . '</p>
-                <p><strong>Author/Director:</strong> ' . $media['author'] . '</p>
-                <p><strong>Type:</strong> ' . $media['media_type'] . '</p>
-                <p>
-                ' . (
-                    $media['media_type'] !== 'film'
-                    ? (
-                        isset($media['isbn'])
-                        ? "<strong>ISBN: </strong>" . $media['isbn'] . "<br>"
-                        : ""
-                    )
-                    : (
-                        isset($media['isan'])
-                        ? "<strong>ISAN: </strong>" . $media['isan'] . "<br>"
-                        : ""
-                    )
-                ) . '
-                    <strong>SAB:</strong> ' . ($media['sab_code'] ?? 0) . '<br>
-                </p>';
-                    
-            echo '    
-                    <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
-                </p>
-                ' . ($showsISBNorISAN ? '' : '<br>') . '
-                <form method="POST">
-                    <input type="hidden" name="media_id" value="' . $media['id'] . '">
-                    <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
-                        ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
-                    </button>
-                </form>
-            </div>
-            ';
-        }
-        ?>
-    </div>
-
-    <!-- My Loans View -->
-    <div id="loans-view" class="hidden">
-    <?=showAccountButton();?>
-    <?=passwordChangeMessage();?>
-    <h3>My Loans</h3>
-    <?php if (empty($userLoans)): ?>
-        <p>You currently have no loans.</p>
-    <?php else: ?>
-        <div class="grid">
-            <?php foreach ($userLoans as $loan): ?>
-                <div class="card">
-                    <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
-                    <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
-                    <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
-                    <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
-                    <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
-                    <?php if ($loan['status'] === 'active'): ?>
-                        <p>
-                            <?php
-                            $days = $loan['days_left'];
-                            if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
-                            else echo "Due in $days days";
-                            ?>
-                        </p>
-                        <form method="POST">
-                            <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
-                            <button type="submit">Return Media</button>
-                        </form>
-                    <?php elseif ($loan['status'] === 'returned'): ?>
-                        <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
-                    <?php else: ?>
-                        <p class="overdue">Written off / overdue</p>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
+            ?>
         </div>
-    <?php endif; ?>
+    </section>
 
-    <!-- Invoices -->
-    <h3>Your Invoices</h3>
-    <?php if (empty($invoices)): ?>
-        <p>No invoices.</p>
-    <?php else: ?>
-        <?php foreach ($invoices as $inv): ?>
-            <div class="invoice">
-                <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
-                <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
-                <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
-                <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
-            </div>
-        <?php endforeach; ?>
-    <?php endif; ?>
-    </div>
+    <!-- My account -->
+    <section id="my-account-view" class="hidden">
+
+        <!-- Account -->
+        <section id="account-section" class="my-account-view-section">
+            <h3>Your Account</h3>
+            <?=showAccountButton();?>
+            <?=passwordChangeMessage();?>
+        </section>
+
+        <!-- Invoices -->
+        <section id="loans-section" class="my-account-view-section">
+            <h3>Your Loans</h3>
+            <?php if (empty($userLoans)): ?>
+                <p>You currently have no loans.</p>
+            <?php else: ?>
+                <div class="grid">
+                    <?php foreach ($userLoans as $loan): ?>
+                        <div class="card">
+                            <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
+                            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
+                            <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
+                            <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
+                            <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
+                            <?php if ($loan['status'] === 'active'): ?>
+                                <p>
+                                    <?php
+                                    $days = $loan['days_left'];
+                                    if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
+                                    else echo "Due in $days days";
+                                    ?>
+                                </p>
+                                <form method="POST">
+                                    <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
+                                    <button type="submit">Return Media</button>
+                                </form>
+                            <?php elseif ($loan['status'] === 'returned'): ?>
+                                <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
+                            <?php else: ?>
+                                <p class="overdue">Written off / overdue</p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <!-- Invoices -->
+        <section id="invoices-section" class="my-account-view-section">
+            <h3>Your Invoices</h3>
+            <?php if (empty($invoices)): ?>
+                <p>No invoices.</p>
+            <?php else: ?>
+                <?php foreach ($invoices as $inv): ?>
+                    <div class="invoice">
+                        <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
+                        <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
+                        <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
+                        <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </section>
+    </section>
 </body>
 </html>

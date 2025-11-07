@@ -169,20 +169,13 @@ button:disabled {
     background-color: #28a745;
 }
 </style>
-<script>
-function toggleView(view) {
-    document.getElementById('media-view').classList.add('hidden');
-    document.getElementById('loans-view').classList.add('hidden');
-    document.getElementById(view + '-view').classList.remove('hidden');
-}
-</script>
 </head>
 <body>
 <div class="header">
     <h2>Welcome, <?php echo htmlspecialchars($username); ?></h2>
     <div>
-        <button class="toggle-btn" onclick="toggleView('media')">All Media</button>
-        <button class="toggle-btn" onclick="toggleView('loans')">My Loans</button>
+        <button class="toggle-btn" onclick="toggleView('all-media-view')">All Media</button>
+        <button class="toggle-btn" onclick="toggleView('my-account-view')">My Loans</button>
         <?php if ($isAdmin): ?>
             <a href="admin.php" class="toggle-btn admin-btn">Admin Panel</a>
         <?php endif; ?>
