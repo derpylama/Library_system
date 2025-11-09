@@ -457,6 +457,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                         $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
                         $desc = trim($_POST['description']);
                         $price = (float)$_POST['price'];
+                        $image_url = $_POST['image'] ?? null;
+                        $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
+                        $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
 
                         echo '<div id="password-confirm-dialog" class="modal popup">
                             <div class="modal-content">
@@ -476,6 +479,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                                 <input type="hidden" name="sab_code_custom" value="' . htmlspecialchars($sabcode_custom) . '"></input>
                                 <input type="hidden" name="description" value="' . htmlspecialchars($desc) . '"></input>
                                 <input type="hidden" name="price" value="' . htmlspecialchars($price) . '"></input>
+                                <input type="hidden" name="image" value="' . htmlspecialchars($image_url) . '"></input>
+                                <input type="hidden" name="image_width" value="' . htmlspecialchars($image_width) . '"></input>
+                                <input type="hidden" name="image_height" value="' . htmlspecialchars($image_height) . '"></input>
                                 <div class="modal-actions">
                                     <button type="submit">Confirm</button>
                                     <button type="button" id="cancel-password-confirm">Cancel</button>
@@ -501,8 +507,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                             <input type="hidden" id="action-type" name="action_type" value="">
                             <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
                             <input type="hidden" name="edit_copy_confirmed" value="' . $id . '"></input>
-                            <input type="hidden" name="barcode" value="' . $barcode . '"></input>
-                            <input type="hidden" name="status" value="' . $status . '"></input>
+                            <input type="hidden" name="barcode" value="' . htmlspecialchars($barcode) . '"></input>
+                            <input type="hidden" name="status" value="' . htmlspecialchars($status) . '"></input>
                             <div class="modal-actions">
                                 <button type="submit">Confirm</button>
                                 <button type="button" id="cancel-password-confirm">Cancel</button>
@@ -666,6 +672,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                     $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
                     $desc = trim($_POST['description']);
                     $price = (float)$_POST['price'];
+                    
+                    $image_url = $_POST['image'] ?? null;
+                    $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
+                    $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
 
                     echo '<div id="password-confirm-dialog" class="modal popup">
                         <div class="modal-content">
@@ -685,6 +695,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                             <input type="hidden" name="sab_code_custom" value="' . htmlspecialchars($sabcode_custom) . '"></input>
                             <input type="hidden" name="description" value="' . htmlspecialchars($desc) . '"></input>
                             <input type="hidden" name="price" value="' . htmlspecialchars($price) . '"></input>
+                            <input type="hidden" name="image" value="' . htmlspecialchars($image_url) . '"></input>
+                            <input type="hidden" name="image_width" value="' . htmlspecialchars($image_width) . '"></input>
+                            <input type="hidden" name="image_height" value="' . htmlspecialchars($image_height) . '"></input>
                             <div class="modal-actions">
                                 <button type="submit">Confirm</button>
                                 <button type="button" id="cancel-password-confirm">Cancel</button>
@@ -711,8 +724,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                         <input type="hidden" id="action-type" name="action_type" value="">
                         <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
                         <input type="hidden" name="edit_copy_confirmed" value="' . $id . '"></input>
-                        <input type="hidden" name="barcode" value="' . $barcode . '"></input>
-                        <input type="hidden" name="status" value="' . $status . '"></input>
+                        <input type="hidden" name="barcode" value="' . htmlspecialchars($barcode) . '"></input>
+                        <input type="hidden" name="status" value="' . htmlspecialchars($status) . '"></input>
                         <div class="modal-actions">
                             <button type="submit">Confirm</button>
                             <button type="button" id="cancel-password-confirm">Cancel</button>
