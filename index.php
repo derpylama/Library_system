@@ -127,7 +127,7 @@ if (isset($_SESSION['user_id'])) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" <?php echo isset($_SESSION['user_id']) ? 'data-loggedin="true"' : ''; ?>>
 <head>
     <meta charset="UTF-8">
     <title>User Dashboard</title>
