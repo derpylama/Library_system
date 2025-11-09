@@ -400,15 +400,21 @@ if (isset($_SESSION['user_id'])) {
                 echo '<p>  
                         <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
                     </p>
-                    ' . ($showsISBNorISAN ? '' : '<br>') . '
-                    <form method="POST">
-                        <input type="hidden" name="media_id" value="' . $media['id'] . '">
-                        <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
-                            ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
-                        </button>
-                    </form>
-                </div>
-                ';
+                    ' . ($showsISBNorISAN ? '' : '<br>');
+
+                if (isset($_SESSION['user_id'])) {
+                        echo '
+                        <form method="POST">
+                            <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                            <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                                ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                            </button>
+                        </form>';
+                } else {
+                        echo '<button class="media-loan-button" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '</button>';
+                }
+
+                echo '</div>';
             }
             ?>
         </div>
