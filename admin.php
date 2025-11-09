@@ -234,6 +234,48 @@ $loans = $pdo->query("
     ORDER BY l.loan_date DESC
 ")->fetchAll();
 
+
+// If $_POST['toggle_features'] is set with value 1 find all $_POST keys starting with 'feature_' and parse out the $key "feature_{key}" and update the options table with the new value
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
+    $features = $pdo->query("SELECT name, type FROM options")->fetchAll();
+
+    foreach ($features as $feature) {
+        $key = $feature['name'];
+        $type = $feature['type'];
+        $postKey = 'feature_' . $key;
+
+        switch ($type) {
+            case 'boolean':
+            case 'bool':
+                // Default 0 unless present in POST
+                $value = isset($_POST[$postKey]) ? '1' : '0';
+                break;
+            case 'int':
+                $value = isset($_POST[$postKey]) ? (int)$_POST[$postKey] : 0;
+                break;
+            case 'float':
+                $value = isset($_POST[$postKey]) ? (float)$_POST[$postKey] : 0.0;
+                break;
+            case 'string':
+            default:
+                $value = isset($_POST[$postKey]) ? trim($_POST[$postKey]) : '';
+                break;
+        }
+
+        $updateStmt = $pdo->prepare("UPDATE options SET value = ? WHERE name = ?");
+        $updateStmt->execute([$value, $key]);
+
+        if (isset($_POST[$postKey])) {
+            unset($_POST[$postKey]);
+        }
+    }
+
+    $message = "Feature options updated.";
+
+    unset($_POST['toggle_features']);
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -555,7 +597,7 @@ $loans = $pdo->query("
             <section id="features_flags">
                 <h3>Options</h3>
                 <fieldset>
-                    <form method="POST" action="php/toggle_features.php">
+                    <form method="POST">
                         <input type="hidden" name="toggle_features" value="1">
                         <label>
                             <?php
@@ -575,7 +617,7 @@ $loans = $pdo->query("
 
                                 $name = $feature['label'] ?? str_replace('_', ' ', $key);
 
-                                echo "<label>
+                                echo "<div class='row'>
                                     " . ucfirst($name) . ": 
                                     ";
                                     
@@ -596,7 +638,7 @@ $loans = $pdo->query("
                                             echo '<input type="text" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
                                             break;
                                     }
-                                echo "</label><br>"; 
+                                echo "</div><br>"; 
                             }
                             ?>
                         </label>
