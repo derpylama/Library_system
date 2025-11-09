@@ -344,7 +344,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                         $actionType = 'delete_user';
                         $itemId = (int)$_POST['delete_user_confirmed'];
                         $itemName = "User ID $itemId";
-                        $actionType = 'delete_user';
 
                         echo '<div id="password-confirm-dialog" class="modal popup">
                             <div class="modal-content">
