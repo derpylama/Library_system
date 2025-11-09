@@ -1,6 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 -- Current
-DROP TABLE IF EXISTS copy, invoice, loan, media, user, sab_category;
+DROP TABLE IF EXISTS copy, invoice, loan, media, user, sab_category, options;
 
 -- Deprecated
 DROP TABLE IF EXISTS category;

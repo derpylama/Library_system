@@ -68,5 +68,5 @@ INSERT INTO invoice (user_id, loan_id, amount, issued_at, paid, description) VAL
 (3, 2, 373.50, '2025-10-30 17:53:11', 0, 'Overdue fine for Star Wars');
 
 INSERT INTO options (name, value, type) VALUES
-('library_name', 'Stina Library', 'string'),
+('library_name', '', 'string'),
 ('compact_card_details', 'true', 'bool');
