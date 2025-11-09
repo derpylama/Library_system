@@ -11,7 +11,7 @@ $fieldWeights = [
 
 $fieldWeights_adminUsers = [
     "username" => 1
-]
+];
 
 $fieldWeights_adminMedia = [
     "media_type" => 6,
@@ -21,7 +21,7 @@ $fieldWeights_adminMedia = [
     "title" => 3,
     "author" => 2,
     "description" => 1
-]
+];
 
 $fieldWeights_adminCopies = [
     "barcode" => 3,
@@ -37,7 +37,7 @@ $fieldWeights_adminLoans = [
     "title" => 3,
     "barcode" => 2,
     "status" => 1
-]
+];
 
 // Function to split search term into tokens, handling quoted phrases
 function tokenizeSearchTerm(string $term): array {
