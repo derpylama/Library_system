@@ -757,7 +757,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
             }
 
             // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
-            echo popupOutputer();
+            //echo popupOutputer();
         ?>
     </div>
 
