@@ -9,6 +9,36 @@ $fieldWeights = [
     "description" => 1
 ];
 
+$fieldWeights_adminUsers = [
+    "username" => 1
+]
+
+$fieldWeights_adminMedia = [
+    "media_type" => 6,
+    "isbn" => 5,
+    "isan" => 5,
+    "sab_code" => 4,
+    "title" => 3,
+    "author" => 2,
+    "description" => 1
+]
+
+$fieldWeights_adminCopies = [
+    "barcode" => 3,
+    "title" => 2,
+    "status" => 1
+];
+
+$fieldWeights_adminLoans = [
+    "loan_date" => 5,
+    "due_date" => 5,
+    "return_date" => 5,
+    "username" => 4,
+    "title" => 3,
+    "barcode" => 2,
+    "status" => 1
+]
+
 // Function to split search term into tokens, handling quoted phrases
 function tokenizeSearchTerm(string $term): array {
     $tokens = [];

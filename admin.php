@@ -4,6 +4,8 @@ require_once('php/barcode.php');
 require_once('php/images.php');
 require_once('php/popup.php');
 
+require_once('php/search.php');
+
 session_start();
 
 // --- AUTH ---
@@ -769,9 +771,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
             <h2>Users</h2>
             <table>
                 <tr><th>Username</th><th>Admin</th><th>Created</th><th>Active loans</th><th>Late loan</th><th>Total Loans</th><th>Total debt</th><th>Actions</th></tr>
+                <?php
+                // MARK: Search
+                // A search implementation here would need to call `SearchMedia($users, $searchTerm, null, $fieldWeights_adminUsers)`
+                ?>
                 <?php foreach ($users as $u):?>
                 <tr>
-                    
                     
                     <td><?php echo htmlspecialchars($u['username']); ?></td>
                     <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
@@ -885,6 +890,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                     <th>Price</th>
                     <th>Actions</th>
                 </tr>
+                <?php
+                // MARK: Search
+                // A search implementation here would need to call `SearchMedia($users, $searchTerm, null, $fieldWeights_adminMedia)`
+                ?>
                 <?php foreach ($media as $m): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($m['isbn']); ?></td>
@@ -973,6 +982,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                 </tr>
                 <?php
                 $copies = $pdo->query("SELECT copy.id, copy.media_id, copy.barcode, copy.status, media.id, media.title FROM `copy` JOIN media ON copy.media_id = media.id")->fetchAll();
+                
+                // MARK: Search
+                // A search implementation here would need to call `SearchMedia($users, $searchTerm, null, $fieldWeights_adminCopies)`
+
                 foreach ($copies as $cp): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($cp['title']); ?></td>
@@ -1012,6 +1025,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
             <h2>Loans</h2>
             <table>
                 <tr><th>ID</th><th>User</th><th>Media</th><th>Barcode</th><th>Loan Date</th><th>Due Date</th><th>Return Date</th><th>Status</th><th>Action</th></tr>
+                <?php
+                // MARK: Search
+                // A search implementation here would need to call `SearchMedia($users, $searchTerm, null, $fieldWeights_adminLoans)`
+                ?>
                 <?php foreach ($loans as $l): ?>
                 <tr>
                     <td><?php echo $l['id']; ?></td>
