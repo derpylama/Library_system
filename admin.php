@@ -268,6 +268,48 @@ $loans = $pdo->query("
     ORDER BY l.loan_date DESC
 ")->fetchAll();
 
+
+// If $_POST['toggle_features'] is set with value 1 find all $_POST keys starting with 'feature_' and parse out the $key "feature_{key}" and update the options table with the new value
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
+    $features = $pdo->query("SELECT name, type FROM options")->fetchAll();
+
+    foreach ($features as $feature) {
+        $key = $feature['name'];
+        $type = $feature['type'];
+        $postKey = 'feature_' . $key;
+
+        switch ($type) {
+            case 'boolean':
+            case 'bool':
+                // Default 0 unless present in POST
+                $value = isset($_POST[$postKey]) ? '1' : '0';
+                break;
+            case 'int':
+                $value = isset($_POST[$postKey]) ? (int)$_POST[$postKey] : 0;
+                break;
+            case 'float':
+                $value = isset($_POST[$postKey]) ? (float)$_POST[$postKey] : 0.0;
+                break;
+            case 'string':
+            default:
+                $value = isset($_POST[$postKey]) ? trim($_POST[$postKey]) : '';
+                break;
+        }
+
+        $updateStmt = $pdo->prepare("UPDATE options SET value = ? WHERE name = ?");
+        $updateStmt->execute([$value, $key]);
+
+        if (isset($_POST[$postKey])) {
+            unset($_POST[$postKey]);
+        }
+    }
+
+    $message = "Feature options updated.";
+
+    unset($_POST['toggle_features']);
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -698,6 +740,7 @@ $loans = $pdo->query("
             <button id="media-btn" class="nav-button" onclick="showTab('media')">Media</button>
             <button id="copies-btn" class="nav-button" onclick="showTab('copies')">Copies</button>
             <button id="loans-btn" class="nav-button" onclick="showTab('loans')">Loans</button>
+            <button id="loans-btn" class="nav-button" onclick="showTab('others')">Others</button>
             <a href="index.php" class="back action-button">← Back to User view</a>
         </nav>
 
@@ -948,7 +991,6 @@ $loans = $pdo->query("
             </table>
         </div>
 
-
         <!-- LOANS TAB -->
         <div id="loans" class="tab hidden">
             <h2>Loans</h2>
@@ -973,6 +1015,64 @@ $loans = $pdo->query("
                 </tr>
                 <?php endforeach; ?>
             </table>
+        </div>
+
+        <!-- OTHERS TAB -->
+        <div id="others" class="tab hidden">
+            <h2>Others</h2>
+            <p>Additional administrative functions can be added here.</p>
+            <section id="features_flags">
+                <h3>Options</h3>
+                <fieldset>
+                    <form method="POST">
+                        <input type="hidden" name="toggle_features" value="1">
+                        <label>
+                            <?php
+                            // CREATE TABLE options (
+                            //     key VARCHAR(255) PRIMARY KEY,
+                            //     value VARCHAR(255) DEFAULT NULL,
+                            //     type VARCHAR(50) DEFAULT NULL
+                            // );
+
+                            // foreach then switch-case for each type: string, bool, boolean, int, float
+                            $getFeaturesSQL = "SELECT * FROM options";
+                            $features = $pdo->query($getFeaturesSQL)->fetchAll();
+                            foreach ($features as $feature) {
+                                $key = htmlspecialchars($feature['name']);
+                                $value = $feature['value'];
+                                $type = $feature['type'];
+
+                                $name = $feature['label'] ?? str_replace('_', ' ', $key);
+
+                                echo "<div class='row'>
+                                    " . ucfirst($name) . ": 
+                                    ";
+                                    
+                                    switch ($type) {
+                                        case 'boolean':
+                                        case 'bool':
+                                            $checked = ($value === '1' || strtolower($value) === 'true') ? 'checked' : '';
+                                            echo '<input type="checkbox" name="feature_' . $key . '" ' . $checked . '><br>';
+                                            break;
+                                        case 'int':
+                                            echo '<input type="number" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            break;
+                                        case 'float':
+                                            echo '<input type="number" step="0.01" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            break;
+                                        case 'string':
+                                        default:
+                                            echo '<input type="text" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            break;
+                                    }
+                                echo "</div><br>"; 
+                            }
+                            ?>
+                        </label>
+                        <button type="submit">Save</button>
+                    </form>
+                </
+            </section>
         </div>
     </main>
 </body>

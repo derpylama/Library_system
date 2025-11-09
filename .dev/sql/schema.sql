@@ -1,6 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 -- Current
-DROP TABLE IF EXISTS copy, invoice, loan, media, user, sab_category;
+DROP TABLE IF EXISTS copy, invoice, loan, media, user, sab_category, options;
 
 -- Deprecated
 DROP TABLE IF EXISTS category;
@@ -71,4 +71,11 @@ CREATE TABLE invoice (
 
     FOREIGN KEY (user_id) REFERENCES user(id),
     FOREIGN KEY (loan_id) REFERENCES loan(id)
+);
+
+CREATE TABLE options (
+    name VARCHAR(25) PRIMARY KEY,
+    value VARCHAR(255) DEFAULT NULL,
+    type VARCHAR(50) DEFAULT NULL,
+    label VARCHAR(255) DEFAULT NULL
 );
