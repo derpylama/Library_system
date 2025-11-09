@@ -114,26 +114,26 @@ function deleteMedia(int $mediaId, PDO $pdo): void {
         WHERE loan_id IN (
             SELECT l.id FROM loan l
             JOIN copy c ON l.copy_id = c.id
-            WHERE c.media_id = :mediaId
+            WHERE c.media_id = ?
         )
     ");
-    $stmt->execute(['mediaId' => $mediaId]);
+    $stmt->execute([$mediaId]);
 
     // Step 2: Delete loans of copies of the media
     $stmt = $pdo->prepare("
         DELETE l FROM loan l
         JOIN copy c ON l.copy_id = c.id
-        WHERE c.media_id = :mediaId
+        WHERE c.media_id = ?
     ");
-    $stmt->execute(['mediaId' => $mediaId]);
+    $stmt->execute([$mediaId]);
 
     // Step 3: Delete copies of the media
-    $stmt = $pdo->prepare("DELETE FROM copy WHERE media_id = :mediaId");
-    $stmt->execute(['mediaId' => $mediaId]);
+    $stmt = $pdo->prepare("DELETE FROM copy WHERE media_id = ?");
+    $stmt->execute([$mediaId]);
 
     // Step 4: Delete the media
-    $stmt = $pdo->prepare("DELETE FROM media WHERE id = :mediaId");
-    $stmt->execute(['mediaId' => $mediaId]);
+    $stmt = $pdo->prepare("DELETE FROM media WHERE id = ?");
+    $stmt->execute([$mediaId]);
 }
 
 function deleteCopy(int $copyId, PDO $pdo): void {
@@ -141,18 +141,18 @@ function deleteCopy(int $copyId, PDO $pdo): void {
     $stmt = $pdo->prepare("
         DELETE FROM invoice
         WHERE loan_id IN (
-            SELECT id FROM loan WHERE copy_id = :copyId
+            SELECT id FROM loan WHERE copy_id = ?
         )
     ");
-    $stmt->execute(['copyId' => $copyId]);
+    $stmt->execute([$copyId]);
 
     // Step 2: Delete loans of the copy
-    $stmt = $pdo->prepare("DELETE FROM loan WHERE copy_id = :copyId");
-    $stmt->execute(['copyId' => $copyId]);
+    $stmt = $pdo->prepare("DELETE FROM loan WHERE copy_id = ?");
+    $stmt->execute([$copyId]);
 
     // Step 3: Delete the copy
-    $stmt = $pdo->prepare("DELETE FROM copy WHERE id = :copyId");
-    $stmt->execute(['copyId' => $copyId]);
+    $stmt = $pdo->prepare("DELETE FROM copy WHERE id = ?");
+    $stmt->execute([$copyId]);
 }
 
 function deleteUser(int $userId, PDO $pdo): void {
@@ -160,26 +160,26 @@ function deleteUser(int $userId, PDO $pdo): void {
     $stmt = $pdo->prepare("
         DELETE FROM invoice
         WHERE loan_id IN (
-            SELECT id FROM loan WHERE user_id = :userId
+            SELECT id FROM loan WHERE user_id = ?
         )
     ");
-    $stmt->execute(['userId' => $userId]);
+    $stmt->execute([$userId]);
 
     // Step 2: Delete loans of the user
-    $stmt = $pdo->prepare("DELETE FROM loan WHERE user_id = :userId");
-    $stmt->execute(['userId' => $userId]);
+    $stmt = $pdo->prepare("DELETE FROM loan WHERE user_id = ?");
+    $stmt->execute([$userId]);
 
     // Step 3: Delete the user
-    $stmt = $pdo->prepare("DELETE FROM user WHERE id = :userId");
-    $stmt->execute(['userId' => $userId]);
+    $stmt = $pdo->prepare("DELETE FROM user WHERE id = ?");
+    $stmt->execute([$userId]);
 }
 
 function deleteLoan(int $loanId, PDO $pdo): void {
     // Step 1: Delete invoices related to the loan
-    $stmt = $pdo->prepare("DELETE FROM invoice WHERE loan_id = :loanId");
-    $stmt->execute(['loanId' => $loanId]);
+    $stmt = $pdo->prepare("DELETE FROM invoice WHERE loan_id = ?");
+    $stmt->execute([$loanId]);
 
     // Step 2: Delete the loan
-    $stmt = $pdo->prepare("DELETE FROM loan WHERE id = :loanId");
-    $stmt->execute(['loanId' => $loanId]);
+    $stmt = $pdo->prepare("DELETE FROM loan WHERE id = ?");
+    $stmt->execute([$loanId]);
 }
