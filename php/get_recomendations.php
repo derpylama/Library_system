@@ -1,32 +1,39 @@
 <?php
 
-
 function getRecommendations(
     PDO $pdo,
-    ?int $userId = null, // negativ if you no user id or empty
+    ?int $userId = null, // negative if no user id or empty
     int $loanHistoryLimit = 50,     // how many latest loans to analyze
     int $recommendationLimit = 20,  // how many recommendations to return
     bool $diversityMode = true,     // cap dominance of a single category
     float $maxCategoryShare = 0.7   // max share per category if diversity mode on
 ): array
 {
-    // ✅ If no userId provided → return 10 most loaned media
+    // ✅ If no userId provided → return 10 most loaned media with at least one available copy
     if (empty($userId) || $userId <= 0) {
         $stmt = $pdo->query("
             SELECT m.id AS media_id
             FROM media m
-            JOIN copy c ON c.media_id = m.id
-            JOIN loan l ON l.copy_id = c.id
-            WHERE c.status = 'available'
+            WHERE EXISTS (
+                SELECT 1
+                FROM copy c
+                WHERE c.media_id = m.id
+                  AND c.status = 'available'
+            )
             GROUP BY m.id
-            ORDER BY COUNT(l.id) DESC
+            ORDER BY (
+                SELECT COUNT(l.id)
+                FROM loan l
+                JOIN copy c ON l.copy_id = c.id
+                WHERE c.media_id = m.id
+            ) DESC
             LIMIT 10
         ");
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
-    
+
     // 1️ Fetch user's most recent sab_codes from loans
-    $query = "
+    $stmt = $pdo->prepare("
         SELECT m.sab_code
         FROM loan l
         JOIN copy c ON l.copy_id = c.id
@@ -34,13 +41,12 @@ function getRecommendations(
         WHERE l.user_id = :user_id
         ORDER BY l.loan_date DESC
         LIMIT $loanHistoryLimit
-    ";
-    $stmt = $pdo->prepare($query);
+    ");
     $stmt->execute(['user_id' => $userId]);
     $sabCodes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     if (empty($sabCodes)) {
-        return []; // No history = no recommendations
+        return [];
     }
 
     // 2️ Extract main categories (first uppercase letter)
@@ -64,18 +70,13 @@ function getRecommendations(
 
     foreach ($topCategories as $cat => $count) {
         $portion = ($count / $total) * $recommendationLimit;
-
-        // Apply diversity cap if enabled
         if ($diversityMode) {
-            $maxForCategory = $recommendationLimit * $maxCategoryShare;
-            $portion = min($portion, $maxForCategory);
+            $portion = min($portion, $recommendationLimit * $maxCategoryShare);
         }
-
         $categoryLimits[$cat] = round($portion);
         $accumulated += $categoryLimits[$cat];
     }
 
-    // Adjust rounding to total exactly recommendationLimit
     while ($accumulated < $recommendationLimit) {
         $firstKey = array_key_first($categoryLimits);
         $categoryLimits[$firstKey]++;
@@ -96,13 +97,10 @@ function getRecommendations(
 
         $excludeList = empty($recommendations) ? '0' : implode(',', $recommendations);
 
-        $query = "
+        $stmt = $pdo->prepare("
             SELECT m.id AS media_id
             FROM media m
-            JOIN copy c ON c.media_id = m.id
-            LEFT JOIN loan l ON l.copy_id = c.id
             WHERE m.sab_code LIKE :sab_pattern
-              AND c.status = 'available'
               AND m.id NOT IN (
                   SELECT DISTINCT c2.media_id
                   FROM loan l2
@@ -110,12 +108,21 @@ function getRecommendations(
                   WHERE l2.user_id = :user_id
               )
               AND m.id NOT IN ($excludeList)
-            GROUP BY m.id
-            ORDER BY COUNT(l.id) DESC, RAND()
+              AND EXISTS (
+                  SELECT 1
+                  FROM copy c
+                  WHERE c.media_id = m.id
+                    AND c.status = 'available'
+              )
+            ORDER BY (
+                SELECT COUNT(l.id)
+                FROM loan l
+                JOIN copy c ON l.copy_id = c.id
+                WHERE c.media_id = m.id
+            ) DESC, RAND()
             LIMIT $limit
-        ";
+        ");
 
-        $stmt = $pdo->prepare($query);
         $stmt->execute([
             'sab_pattern' => $category . '%',
             'user_id' => $userId
@@ -126,35 +133,41 @@ function getRecommendations(
         $missing += max(0, $limit - count($mediaIds));
     }
 
-    // 6️ Fill any missing slots with random available items (no duplicates)
+    // 6️ Fill missing slots with random available media
     if ($missing > 0) {
         $excludeList = empty($recommendations) ? '0' : implode(',', $recommendations);
 
-        $query = "
+        $stmt = $pdo->prepare("
             SELECT m.id AS media_id
             FROM media m
-            JOIN copy c ON c.media_id = m.id
-            LEFT JOIN loan l ON l.copy_id = c.id
-            WHERE c.status = 'available'
-              AND m.id NOT IN (
-                  SELECT DISTINCT c2.media_id
-                  FROM loan l2
-                  JOIN copy c2 ON l2.copy_id = c2.id
-                  WHERE l2.user_id = :user_id
-              )
+            WHERE m.id NOT IN (
+                SELECT DISTINCT c2.media_id
+                FROM loan l2
+                JOIN copy c2 ON l2.copy_id = c2.id
+                WHERE l2.user_id = :user_id
+            )
               AND m.id NOT IN ($excludeList)
-            GROUP BY m.id
-            ORDER BY COUNT(l.id) DESC, RAND()
+              AND EXISTS (
+                  SELECT 1
+                  FROM copy c
+                  WHERE c.media_id = m.id
+                    AND c.status = 'available'
+              )
+            ORDER BY (
+                SELECT COUNT(l.id)
+                FROM loan l
+                JOIN copy c ON l.copy_id = c.id
+                WHERE c.media_id = m.id
+            ) DESC, RAND()
             LIMIT $missing
-        ";
+        ");
 
-        $stmt = $pdo->prepare($query);
         $stmt->execute(['user_id' => $userId]);
         $extra = $stmt->fetchAll(PDO::FETCH_COLUMN);
         $recommendations = array_merge($recommendations, $extra);
     }
 
-    // 7️ Remove duplicates and trim to desired length
+    // 7️ Remove duplicates and trim
     $recommendations = array_values(array_unique($recommendations));
     $recommendations = array_slice($recommendations, 0, $recommendationLimit);
 

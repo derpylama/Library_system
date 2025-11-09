@@ -83,12 +83,12 @@ $recommendations = getRecommendations($pdo, $recomuserid, 50, 10, true, 0.7);
 
 
 // Fetch media details
-$mediaList = [];
+$recommendedMediaList = [];
 if (!empty($recommendations)) {
     $inQuery = implode(',', array_fill(0, count($recommendations), '?'));
-    $stmt = $pdo->prepare("SELECT image_url, title  FROM media WHERE id IN ($inQuery) ORDER BY FIELD(id, $inQuery)");
+    $stmt = $pdo->prepare("SELECT * FROM media WHERE id IN ($inQuery) ORDER BY FIELD(id, $inQuery)");
     $stmt->execute(array_merge($recommendations, $recommendations));
-    $mediaList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $recommendedMediaList = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Fetch all media
@@ -225,19 +225,24 @@ if (isset($_SESSION['user_id'])) {
                 <?php 
                 // MARK: RECOMMENDATIONS
                 ?>
-        <h2>Recommended for You</h2> 
-        <div class="carousel-container" id="carousel-container">
-            <div class="arrow arrow-left">&#8249;</div>
-            <div class="arrow arrow-right">&#8250;</div>
-            <div class="recommendation-row" id="carousel">
-                <?php foreach ($mediaList as $media): ?>
-                    <div class="favorite-media-card">
-                        <img src="<?= htmlspecialchars($media['image_url']) ?>" alt="<?= htmlspecialchars($media['title']) ?>">
-                        <div class="title"><?= htmlspecialchars($media['title']) ?></div>
+
+            <details id="recommendations-details" <?= empty($searchTerm) ? 'open' : '' ?>>
+                <summary>Toggle recommendations</summary>
+
+                <div class="carousel-container" id="carousel-container">
+                    <div class="arrow arrow-left">&#8249;</div>
+                    <div class="arrow arrow-right">&#8250;</div>
+                    <div class="recommendation-row" id="carousel">
+                        <?php foreach ($recommendedMediaList as $media): ?>
+                            <div class="favorite-media-card">
+                                <img src="<?= htmlspecialchars($media['image_url']) ?>" alt="<?= htmlspecialchars($media['title']) ?>">
+                                <div class="title"><?= htmlspecialchars($media['title']) ?></div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
+                </div>
+            </details>
+
 
         <div class="grid">
             
