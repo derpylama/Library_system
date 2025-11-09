@@ -354,7 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                                 </div>
                             </form>
                 
-                            <p id="password-error" class="error hidden"></p>
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
                         </div>
                         </div>';
 
@@ -410,7 +410,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                                 </div>
                             </form>
                 
-                            <p id="password-error" class="error hidden"></p>
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
                         </div>
                         </div>';
 
@@ -436,7 +436,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                                 </div>
                             </form>
                 
-                            <p id="password-error" class="error hidden"></p>
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
                         </div>
                         </div>';
 
@@ -480,7 +480,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                                 </div>
                             </form>
                 
-                            <p id="password-error" class="error hidden"></p>
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
                         </div>
                         </div>';
                     
@@ -506,7 +506,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                             </div>
                         </form>
             
-                        <p id="password-error" class="error hidden"></p>
+                        <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
                     </div>
                     </div>';
                         
@@ -707,7 +707,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                     <form id="password-confirm-form" method="POST">
                         <input type="hidden" id="action-type" name="action_type" value="">
                         <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
-                        <input type="hidden" name="edit_copy_confirm" value="' . $id . '"></input>
+                        <input type="hidden" name="edit_copy_confirmed" value="' . $id . '"></input>
                         <input type="hidden" name="barcode" value="' . $barcode . '"></input>
                         <input type="hidden" name="status" value="' . $status . '"></input>
                         <div class="modal-actions">
