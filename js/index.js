@@ -11,22 +11,34 @@ function toggleView(view) {
     var myAccountButton = document.getElementById("my-account-button");
     if (myAccountButton !== null) {
         if (savedView === 'my-account-view') {
-            myAccountButton.style.display = "none";
+            //myAccountButton.style.display = "none";
+            myAccountButton.classList.add('hidden');
         }
-        else{
-            myAccountButton.style.display = "inline-block";
+        else {
+            //myAccountButton.style.display = "inline-block";
+            myAccountButton.classList.remove('hidden');
         }
     }    
 
     if (savedView === 'all-media-view') {
-        allMediaButton.style.display = "none";
+        //allMediaButton.style.display = "none";
+        allMediaButton.classList.add('hidden');
     }
     else{
-        allMediaButton.style.display = "inline-block";
+        //allMediaButton.style.display = "inline-block";
+        allMediaButton.classList.remove('hidden');
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // If URI has ?clearsessiontab, clear the session storage for currentView and remove ?clearsessiontab
+    if (window.location.search.includes('clearsessiontab')) {
+        sessionStorage.removeItem('currentView');
+        var newUrl = window.location.href.split('?')[0];
+        window.history.replaceState({}, document.title, newUrl);
+    }
+
+    // Handle tabbing
     const savedView = sessionStorage.getItem('currentView') || 'all-media-view';
     toggleView(savedView);
 
@@ -35,18 +47,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (myAccountButton !== null) {
         if (savedView === 'my-account-view') {
-            myAccountButton.style.display = "none";
+            //myAccountButton.style.display = "none";
+            myAccountButton.classList.add('hidden');
         }
         else{
-            myAccountButton.style.display = "inline-block";
+            //myAccountButton.style.display = "inline-block";
+            myAccountButton.classList.remove('hidden');
         }
     }  
 
     if (savedView === 'all-media-view') {
-        allMediaButton.style.display = "none";
+        //allMediaButton.style.display = "none";
+        allMediaButton.classList.add('hidden');
     }
     else{
-        allMediaButton.style.display = "inline-block";
+        //allMediaButton.style.display = "inline-block";
+        allMediaButton.classList.remove('hidden');
     }
 
     document.getElementById('all-media-view').addEventListener('click', function() {

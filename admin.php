@@ -18,7 +18,9 @@ $stmt = $pdo->prepare("SELECT is_admin FROM user WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
-if (!$user || $user['is_admin'] != 1) {
+$isAdmin = $user && $user['is_admin'] == 1;
+
+if (!$isAdmin) {
     echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
     header('Location: index.php');
     exit;
@@ -682,7 +684,8 @@ $loans = $pdo->query("
             }
 
             // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
-            popupOutputer();
+            // echo popupOutputer();
+            
         ?>
     </div>
 
@@ -838,6 +841,7 @@ $loans = $pdo->query("
                         <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
                         <form method="POST" style="display:inline;">
                             <input type="hidden"  name="delete_media" value="<?php echo $m['id']; ?>">
+                            <input type="hidden" name="popup_message" value="<?php echo $m['title'] ?>">
                             <button class="delete action-button" type="submit">Delete</button>
                         </form>
                     </td>
