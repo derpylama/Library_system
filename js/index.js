@@ -12,7 +12,6 @@ function toggleView(view) {
     if (myAccountButton !== null) {
         if (savedView === 'my-account-view') {
             myAccountButton.style.display = "none";
-            stopCarousel();
         }
         else{
             myAccountButton.style.display = "inline-block";
@@ -20,7 +19,6 @@ function toggleView(view) {
     }    
 
     if (savedView === 'all-media-view') {
-        startCarousel();
         allMediaButton.style.display = "none";
     }
     else{

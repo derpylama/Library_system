@@ -74,7 +74,12 @@ if (isset($_SESSION['user_id'])) {
 }
 
 // MARK: RECOMMENDATIONS
-$recommendations = getRecommendations($pdo, $userId, 50, 10, true, 0.7);
+if (isset($_SESSION['user_id'])) {
+    $recomuserid = $_SESSION['user_id'];
+} else {
+    $recomuserid = -1; // Guest user
+}
+$recommendations = getRecommendations($pdo, $recomuserid, 50, 10, true, 0.7);
 
 
 // Fetch media details
