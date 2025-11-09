@@ -1019,10 +1019,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
 
         <!-- OTHERS TAB -->
         <div id="others" class="tab hidden">
-            <h2>Others</h2>
-            <p>Additional administrative functions can be added here.</p>
             <section id="features_flags">
-                <h3>Options</h3>
+                <h2>Options</h2>
                 <fieldset>
                     <form method="POST">
                         <input type="hidden" name="toggle_features" value="1">
