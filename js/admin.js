@@ -51,50 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // const dialog = document.getElementById("password-confirm-dialog");
-    // const wrapper = document.getElementById("popup-wrapper");
-    // const form = document.getElementById("password-confirm-form");
-    // const input = document.getElementById("confirm-password-input");
-    // const error = document.getElementById("password-error");
-    // const cancelBtn = document.getElementById("cancel-password-confirm");
-
-    // let pendingForm = null; // The form waiting for confirmation
-
-    // if(form != null){
-    //     // Intercept all delete or edit POST forms
-    //     document.querySelectorAll("form[method='POST']").forEach(f => {
-    //         f.addEventListener("submit", e => {
-    //         // Skip add / non-dangerous actions
-    //         const hasDangerousField = f.querySelector("[name^='delete_']") || f.querySelector("[name^='edit_']");
-    //         if (!hasDangerousField) return; // allow normal submit
+    document.addEventListener('click', function (e) {
+        console.log(e.target)
+        if (e.target && e.target.id === 'cancel-password-confirm') {
+            const popup = document.getElementById('password-confirm-dialog');
+            if (popup) popup.remove(); // Removes it from DOM
+        }
     
-    //         e.preventDefault();
-    //         pendingForm = f;
-    //         showPasswordDialog();
-    //         });
-    //     });
-        
-    //     console.log();
-    //     form.addEventListener("submit", async e => {
-    //         e.preventDefault();
-    //         const password = input.value.trim();
-    //         if (!password) return;
-    
-    //         const result = await fetch("./php/auth.php", {
-    //         method: "POST",
-    //         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    //         body: `password=${encodeURIComponent(password)}`
-    //         });
-    
-    //         if (result.ok) {
-    //         if (pendingForm) pendingForm.submit(); // allow original form submit now
-    //         } else {
-    //         error.textContent = "Incorrect password. Try again.";
-    //         error.classList.remove("hidden");
-    //         }
-    //     });
-
-
-    // }
-
+        // Optional: also close if clicking backdrop
+        if (e.target && e.target.id === 'popup-wrapper') {
+            const popup = document.getElementById('password-confirm-dialog');
+            if (popup) popup.remove();
+        }
+    });
 });
