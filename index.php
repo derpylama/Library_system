@@ -6,6 +6,7 @@ require_once('php/account.php');
 require_once('php/get_recomendations.php');
 
 $COLLAPSE_CARD_DETAILS = false;
+require_once('php/popup.php');
 
 @session_start();
 
@@ -80,7 +81,34 @@ if (isset($_SESSION['user_id'])) {
     $recomuserid = -1; // Guest user
 }
 $recommendations = getRecommendations($pdo, $recomuserid, 50, 10, true, 0.7);
+// Fetch all options into an associative array
+$optionsStmt = $pdo->query("SELECT name, value, type FROM options");
+$options = [];
+while ($row = $optionsStmt->fetch()) {
+    $name = $row['name'];
+    $value = $row['value'];
+    $type = $row['type'];
+    // Cast value based on type
+    switch ($type) {
+        case 'boolean':
+        case 'bool':
+            $value = ($value === '1' || strtolower($value) === 'true') ? true : false;
+            break;
+        case 'int':
+            $value = (int)$value;
+            break;
+        case 'float':
+            $value = (float)$value;
+            break;
+        case 'string':
+        default:
+            // Keep as string
+            break;
+    }
+    $options[$name] = $value;
+}
 
+$COLLAPSE_CARD_DETAILS = isset($options['compact_card_details']) ? boolval($options['compact_card_details']) : false;
 
 // Fetch media details
 $recommendedMediaList = [];
@@ -143,7 +171,7 @@ if (isset($_SESSION['user_id'])) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" <?php echo isset($_SESSION['user_id']) ? 'data-loggedin="true"' : ''; ?>>
 <head>
     <meta charset="UTF-8">
     <title>User Dashboard</title>
@@ -157,18 +185,25 @@ if (isset($_SESSION['user_id'])) {
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
     <div id="popup-wrapper" class="popup-wrapper-with-backdrop">
         <?php
-
+            if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['popup_message'])) {
+                $_SESSION['popup_message'] = $_POST['popup_message'];
+                echo popupOutputer();
+            }
             // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
 
         ?>
     </div>
 
     <header>
-        <?php 
-            if (isset($_SESSION["user_id"])){
-                echo "<h2>Welcome, " . htmlspecialchars($username) . "</h2>";
-            }else{
-                echo "<h2>Welcome</h2>";
+        <?php
+            if (isset($options["library_name"]) && !empty($options["library_name"])) {
+                echo "<h1>" . htmlspecialchars($options["library_name"]) . "</h1>";
+            } else {
+                if (isset($_SESSION["user_id"])){
+                    echo "<h2>Welcome, " . htmlspecialchars($username) . "</h2>";
+                }else{
+                    echo "<h2>Welcome</h2>";
+                }
             }
         ?>
         <p id="top-menu-message" style="display: none;"></p>
@@ -405,7 +440,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="media-image-container">
                     ' . imageType($media['image_url'], $imageSize) . '
                     </div>
-                    <p class="description">' . nl2br($media['description']) . '</p>
+                    <div class="description-wrapper"><p class="description">' . nl2br($media['description']) . '</p></div>
                     ' . (
                         $COLLAPSE_CARD_DETAILS
                         ? '<details>
@@ -434,18 +469,24 @@ if (isset($_SESSION['user_id'])) {
                     echo '</details>';
                 }
 
-                echo '    
+                echo '<p>  
                         <strong>Avaliability:</strong> ' . ($media['available_copies'] ?? 'N/A') . ' of ' . ($media['total_copies'] ?? 'N/A') . '<br>
                     </p>
-                    ' . ($showsISBNorISAN ? '' : '<br>') . '
-                    <form method="POST">
-                        <input type="hidden" name="media_id" value="' . $media['id'] . '">
-                        <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
-                            ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
-                        </button>
-                    </form>
-                </div>
-                ';
+                    ' . ($showsISBNorISAN ? '' : '<br>');
+
+                if (isset($_SESSION['user_id'])) {
+                        echo '
+                        <form method="POST">
+                            <input type="hidden" name="media_id" value="' . $media['id'] . '">
+                            <button type="submit" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>
+                                ' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '
+                            </button>
+                        </form>';
+                } else {
+                        echo '<button class="media-loan-button" ' . (($media['available_copies'] == 0) ? 'disabled' : '') . '>' . (($media['available_copies'] == 0) ? 'No Copies Available' : 'Loan This Media') . '</button>';
+                }
+
+                echo '</div>';
             }
             ?>
         </div>
@@ -456,63 +497,72 @@ if (isset($_SESSION['user_id'])) {
 
         <!-- Account -->
         <section id="account-section" class="my-account-view-section">
-            <h3>Your Account</h3>
-            <?=showAccountButton();?>
-            <?=passwordChangeMessage();?>
+            <div class="section-card">
+                <h3>Your Account</h3>
+                <div class="section-card-content">
+                    <?=showAccountButton();?>
+                    <?=showAccountButton('password');?>
+                </div>
+                <?=passwordChangeMessage();?>
+            </div>
         </section>
 
         <!-- Loans -->
         <section id="loans-section" class="my-account-view-section">
-            <h3>Your Loans</h3>
-            <?php if (empty($userLoans)): ?>
-                <p>You currently have no loans.</p>
-            <?php else: ?>
-                <div class="grid">
-                    <?php foreach ($userLoans as $loan): ?>
-                        <div class="card">
-                            <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
-                            <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
-                            <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
-                            <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
-                            <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
-                            <?php if ($loan['status'] === 'active'): ?>
-                                <p>
-                                    <?php
-                                    $days = $loan['days_left'];
-                                    if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
-                                    else echo "Due in $days days";
-                                    ?>
-                                </p>
-                                <form method="POST">
-                                    <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
-                                    <button type="submit">Return Media</button>
-                                </form>
-                            <?php elseif ($loan['status'] === 'returned'): ?>
-                                <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
-                            <?php else: ?>
-                                <p class="overdue">Written off / overdue</p>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+            <div class="section-card">
+                <h3>Your Loans</h3>
+                <?php if (empty($userLoans)): ?>
+                    <p>You currently have no loans.</p>
+                <?php else: ?>
+                    <div class="grid">
+                        <?php foreach ($userLoans as $loan): ?>
+                            <div class="card">
+                                <h3><?php echo htmlspecialchars($loan['title']); ?></h3>
+                                <p><strong>Author/Director:</strong> <?php echo htmlspecialchars($loan['author']); ?></p>
+                                <p><strong>Barcode:</strong> <?php echo htmlspecialchars($loan['barcode']); ?></p>
+                                <p><strong>Status:</strong> <?php echo htmlspecialchars($loan['status']); ?></p>
+                                <p><strong>Due:</strong> <?php echo htmlspecialchars($loan['due_date']); ?></p>
+                                <?php if ($loan['status'] === 'active'): ?>
+                                    <p>
+                                        <?php
+                                        $days = $loan['days_left'];
+                                        if ($days < 0) echo "<span class='overdue'>Overdue by " . abs($days) . " days</span>";
+                                        else echo "Due in $days days";
+                                        ?>
+                                    </p>
+                                    <form method="POST">
+                                        <input type="hidden" name="return_loan_id" value="<?php echo $loan['id']; ?>">
+                                        <button type="submit">Return Media</button>
+                                    </form>
+                                <?php elseif ($loan['status'] === 'returned'): ?>
+                                    <p class="returned">Returned on <?php echo htmlspecialchars($loan['return_date']); ?></p>
+                                <?php else: ?>
+                                    <p class="overdue">Written off / overdue</p>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         </section>
 
         <!-- Invoices -->
         <section id="invoices-section" class="my-account-view-section">
-            <h3>Your Invoices</h3>
-            <?php if (empty($invoices)): ?>
-                <p>No invoices.</p>
-            <?php else: ?>
-                <?php foreach ($invoices as $inv): ?>
-                    <div class="invoice">
-                        <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
-                        <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
-                        <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
-                        <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <div class="section-card">
+                <h3>Your Invoices</h3>
+                <?php if (empty($invoices)): ?>
+                    <p>No invoices.</p>
+                <?php else: ?>
+                    <?php foreach ($invoices as $inv): ?>
+                        <div class="invoice">
+                            <p><strong>Issued:</strong> <?php echo $inv['issued_at']; ?></p>
+                            <p><strong>Amount:</strong> <?php echo $inv['amount']; ?> kr</p>
+                            <p><strong>Description:</strong> <?php echo htmlspecialchars($inv['description']); ?></p>
+                            <p><strong>Status:</strong> <?php echo $inv['paid'] ? 'Paid' : 'Unpaid'; ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </section>
     </section>
 </body>

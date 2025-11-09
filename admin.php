@@ -3,11 +3,13 @@ require_once('php/db.php');
 require_once('php/barcode.php');
 require_once('php/images.php');
 require_once('php/popup.php');
+require_once('php/deletion_helpers.php');
 
 session_start();
 
 // --- AUTH ---
 if (!isset($_SESSION['user_id'])) {
+    echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
     header('Location: index.php');
     exit;
 }
@@ -17,14 +19,38 @@ $stmt = $pdo->prepare("SELECT is_admin FROM user WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
-if (!$user || $user['is_admin'] != 1) {
+$isAdmin = $user && $user['is_admin'] == 1;
+
+if (!$isAdmin) {
     echo "<h3>Access Denied</h3><p>You are not authorized to view this page.</p>";
+    header('Location: index.php');
     exit;
+}
+
+
+//Password confirmation before actions are executed
+$passwordConfirmed = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
+    $password = $_POST['password'];
+    $userId = $_SESSION['user_id'];
+
+    $stmt = $pdo->prepare("SELECT passwordhash FROM user WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+
+    if ($user && hash('sha256', $password) === $user['passwordhash']) {
+        $passwordConfirmed = true;
+
+        $passwordError = "";
+    } else {
+        $passwordError = "Incorrect password. Please try again.";
+        $passwordConfirmed = false;
+        // Re-display the popup with error message
+    }        
 }
 
 // --- ACTIONS ---
 $message = "";
-
 // Add new media
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $isbn = trim($_POST['isbn']);
@@ -110,106 +136,124 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_copy'])) {
 }
 
 // Delete user
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
-    $id = (int)$_POST['delete_user'];
-    $pdo->prepare("DELETE FROM user WHERE id = ?")->execute([$id]);
-    $message = "User ID $id deleted.";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_confirmed'])) {
+    if ($passwordConfirmed) {
+        $id = (int)$_POST['delete_user_confirmed'];
+        //$pdo->prepare("DELETE FROM user WHERE id = ?")->execute([$id]);
+        deleteUser($id, $pdo);
+        $message = "User ID $id deleted.";
+    }
 }
 
 // Edit user (update username, admin, password)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
-    $id = (int)$_POST['edit_user'];
-    $username = trim($_POST['username']);
-    $isAdmin = isset($_POST['is_admin']) ? (int)$_POST['is_admin'] : 0;
-    $newPassword = trim($_POST['new_password']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_confirmed'])) {
+    if($passwordConfirmed){
+        $id = (int)$_POST['edit_user_confirmed'];
+        $username = trim($_POST['username']);
+        $isAdmin = isset($_POST['is_admin']) ? (int)$_POST['is_admin'] : 0;
+        $newPassword = trim($_POST['new_password']);
 
-    if ($newPassword !== "") {
-        $stmt = $pdo->prepare("UPDATE user SET username=?, passwordhash=?, is_admin=? WHERE id=?");
-        $stmt->execute([$username, $newPassword, $isAdmin, $id]);
-    } else {
-        $stmt = $pdo->prepare("UPDATE user SET username=?, is_admin=? WHERE id=?");
-        $stmt->execute([$username, $isAdmin, $id]);
+        if ($newPassword !== "") {
+            $stmt = $pdo->prepare("UPDATE user SET username=?, passwordhash=?, is_admin=? WHERE id=?");
+            $stmt->execute([$username, $newPassword, $isAdmin, $id]);
+        } else {
+            $stmt = $pdo->prepare("UPDATE user SET username=?, is_admin=? WHERE id=?");
+            $stmt->execute([$username, $isAdmin, $id]);
+        }
+
+        $message = "User ID $id updated.";
     }
-
-    $message = "User ID $id updated.";
 }
 
 // Delete media
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
-    $id = (int)$_POST['delete_media'];
-    $pdo->prepare("DELETE FROM media WHERE id = ?")->execute([$id]);
-    $message = "Media ID $id deleted.";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media_confirmed'])) {
+    if($passwordConfirmed){
+        $id = (int)$_POST['delete_media_confirmed'];
+        //$pdo->prepare("DELETE FROM media WHERE id = ?")->execute([$id]);
+        deleteMedia($id, $pdo);
+        $message = "Media ID $id deleted.";
+    }    
 }
 
 // Edit media
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media'])) {
-    $id = (int)$_POST['edit_media'];
-    $isbn = trim($_POST['isbn']);
-    $isan = trim($_POST['isan']);
-    $title = trim($_POST['title']);
-    $author = trim($_POST['author']);
-    $type = $_POST['media_type'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media_confirmed'])) {
+    if ($passwordConfirmed){
+        $id = (int)$_POST['edit_media_confirmed'];
+        $isbn = trim($_POST['isbn']);
+        $isan = trim($_POST['isan']);
+        $title = trim($_POST['title']);
+        $author = trim($_POST['author']);
+        $type = $_POST['media_type'];
 
-    // Images are {image_url, image_width, image_height} width+height is only used for portrait/landscape/square detection so default is 1x2 (portrait), image === null means missing image
-    $image_url = $_POST['image'] ?? null;
-    if ($image_url !== null) {
-        $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
-        $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
+        // Images are {image_url, image_width, image_height} width+height is only used for portrait/landscape/square detection so default is 1x2 (portrait), image === null means missing image
+        $image_url = $_POST['image'] ?? null;
+        if ($image_url !== null) {
+            $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
+            $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
 
-        if ($image_width === null || $image_height === null) {
-            $imageSize = getImageSizeW($image_url);
-            if ($imageSize !== null && $imageSize !== false) {
-                $image_width = $imageSize[0];
-                $image_height = $imageSize[1];
-            } else {
-                $image_width = 1;
-                $image_height = 2;
+            if ($image_width === null || $image_height === null) {
+                $imageSize = getImageSizeW($image_url);
+                if ($imageSize !== null && $imageSize !== false) {
+                    $image_width = $imageSize[0];
+                    $image_height = $imageSize[1];
+                } else {
+                    $image_width = 1;
+                    $image_height = 2;
+                }
             }
+        } else {
+            $image_width = 1;
+            $image_height = 2;
         }
-    } else {
-        $image_width = 1;
-        $image_height = 2;
-    }
+            
+        // Remove any hyphens from ISBN and ISAN
+        $isbn = str_replace('-', '', $isbn);
+        $isan = str_replace('-', '', $isan);
+
+        $sabcode_preset = $_POST['sab_code_preset'];
+        $sabcode_custom = trim($_POST['sab_code_custom']);
+        $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
         
-    // Remove any hyphens from ISBN and ISAN
-    $isbn = str_replace('-', '', $isbn);
-    $isan = str_replace('-', '', $isan);
+        
+        $desc = trim($_POST['description']);
+        $price = (float)$_POST['price'];
 
-    $sabcode_preset = $_POST['sab_code_preset'];
-    $sabcode_custom = trim($_POST['sab_code_custom']);
-    $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
-    
-    
-    $desc = trim($_POST['description']);
-    $price = (float)$_POST['price'];
-
-    $stmt = $pdo->prepare("UPDATE media SET isbn=?, isan=?, title=?, author=?, media_type=?, image_url=?, image_width=?, image_height=?, sab_code=?, description=?, price=?, updated_at=NOW() WHERE id=?");
-    $stmt->execute([$isbn, $isan, $title, $author, $type, $image_url, $image_width, $image_height, $sabcode, $desc, $price, $id]);
-    $message = "Media ID $id updated.";
+        $stmt = $pdo->prepare("UPDATE media SET isbn=?, isan=?, title=?, author=?, media_type=?, image_url=?, image_width=?, image_height=?, sab_code=?, description=?, price=?, updated_at=NOW() WHERE id=?");
+        $stmt->execute([$isbn, $isan, $title, $author, $type, $image_url, $image_width, $image_height, $sabcode, $desc, $price, $id]);
+        $message = "Media ID $id updated.";
+    }
 }
 
 // Edit copy
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_copy'])) {
-    $id = (int)$_POST['edit_copy'];
-    $barcode = trim($_POST['barcode']);
-    $status = $_POST['status'];
-    $stmt = $pdo->prepare("UPDATE copy SET barcode=?, status=? WHERE id=?");
-    $stmt->execute([$barcode, $status, $id]);
-    $message = "Copy ID $id updated.";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_copy_confirmed'])) {
+    if ($passwordConfirmed){
+        $id = (int)$_POST['edit_copy_confirmed'];
+        $barcode = trim($_POST['barcode']);
+        $status = $_POST['status'];
+        $stmt = $pdo->prepare("UPDATE copy SET barcode=?, status=? WHERE id=?");
+        $stmt->execute([$barcode, $status, $id]);
+        $message = "Copy ID $id updated.";
+    }    
 }
 
 // Delete copy
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_copy'])) {
-    $id = (int)$_POST['delete_copy'];
-    $pdo->prepare("DELETE FROM copy WHERE id = ?")->execute([$id]);
-    $message = "Copy ID $id deleted.";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_copy_confirmed'])) {
+    if ($passwordConfirmed){
+        $id = (int)$_POST['delete_copy_confirmed'];
+        //$pdo->prepare("DELETE FROM copy WHERE id = ?")->execute([$id]);
+        deleteCopy($id, $pdo);
+        $message = "Copy ID $id deleted.";
+    }    
 }
 
 // Delete loan
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan'])) {
-    $id = (int)$_POST['delete_loan'];
-    $pdo->prepare("DELETE FROM loan WHERE id = ?")->execute([$id]);
-    $message = "Loan ID $id deleted.";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan_confirmed'])) {
+    if ($passwordConfirmed){
+        $id = (int)$_POST['delete_loan_confirmed'];
+        //$pdo->prepare("DELETE FROM loan WHERE id = ?")->execute([$id]);
+        deleteLoan($id, $pdo);
+        $message = "Loan ID $id deleted.";
+    }    
 }
 
 // --- FETCH DATA ---
@@ -231,6 +275,48 @@ $loans = $pdo->query("
     ORDER BY l.loan_date DESC
 ")->fetchAll();
 
+
+// If $_POST['toggle_features'] is set with value 1 find all $_POST keys starting with 'feature_' and parse out the $key "feature_{key}" and update the options table with the new value
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
+    $features = $pdo->query("SELECT name, type FROM options")->fetchAll();
+
+    foreach ($features as $feature) {
+        $key = $feature['name'];
+        $type = $feature['type'];
+        $postKey = 'feature_' . $key;
+
+        switch ($type) {
+            case 'boolean':
+            case 'bool':
+                // Default 0 unless present in POST
+                $value = isset($_POST[$postKey]) ? '1' : '0';
+                break;
+            case 'int':
+                $value = isset($_POST[$postKey]) ? (int)$_POST[$postKey] : 0;
+                break;
+            case 'float':
+                $value = isset($_POST[$postKey]) ? (float)$_POST[$postKey] : 0.0;
+                break;
+            case 'string':
+            default:
+                $value = isset($_POST[$postKey]) ? trim($_POST[$postKey]) : '';
+                break;
+        }
+
+        $updateStmt = $pdo->prepare("UPDATE options SET value = ? WHERE name = ?");
+        $updateStmt->execute([$value, $key]);
+
+        if (isset($_POST[$postKey])) {
+            unset($_POST[$postKey]);
+        }
+    }
+
+    $message = "Feature options updated.";
+
+    unset($_POST['toggle_features']);
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -243,12 +329,435 @@ $loans = $pdo->query("
     <script src="js/admin.js" defer></script>
 </head>
 <body>
+    
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
     <div id="popup-wrapper" class="popup-wrapper-with-backdrop">
         <?php
 
+            // delete_user => delete_user_confirmed
+            // ...
+            
+            if($passwordConfirmed === false){
+
+                switch (true) {
+                    case isset($_POST['delete_user_confirmed']):
+                        $actionType = 'delete_user';
+                        $itemId = (int)$_POST['delete_user_confirmed'];
+                        $itemName = "User ID $itemId";
+
+                        echo '<div id="password-confirm-dialog" class="modal popup">
+                            <div class="modal-content">
+                            <h3>Confirm your password</h3>
+                            <p>Please re-enter your password to continue.</p>
+                
+                            <form id="password-confirm-form" method="POST">
+                                <input type="hidden" id="action-type" name="action_type" value="">
+                                <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                                <input type="hidden" name="delete_user_confirmed" value="' . $itemId . '"></input>
+                                <div class="modal-actions">
+                                    <button type="submit">Confirm</button>
+                                    <button type="button" id="cancel-password-confirm">Cancel</button>
+                                </div>
+                            </form>
+                
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
+                        </div>
+                        </div>';
+
+                        break;
+                    case isset($_POST['edit_user_confirmed']):
+                        $actionType = 'edit_user';
+                        $itemId = (int)$_POST['edit_user_confirmed'];
+                        $itemName = "User ID $itemId";
+                        $username = trim($_POST['username']);
+                        $newPassword = trim($_POST['new_password']);
+                        $isAdmin = isset($_POST['is_admin']) ? (int)$_POST['is_admin'] : 0;
+
+                        echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="edit_user_confirmed" value="' . $itemId . '"></input>
+                            <input type="hidden" name="username" value="' . htmlspecialchars($username) . '"></input>
+                            <input type="hidden" name="new_password" value="' . htmlspecialchars($newPassword) . '"></input>
+                            <input type="hidden" name="is_admin" value="' . htmlspecialchars($isAdmin) . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
+                        </div>
+                        </div>';
+                        break;
+                    case isset($_POST['delete_media_confirmed']):
+                        $actionType = 'delete_media';
+                        $itemId = (int)$_POST['delete_media_confirmed'];
+                        $itemName = "Media ID $itemId";
+                        $actionType = 'delete_media';
+
+                        echo '<div id="password-confirm-dialog" class="modal popup">
+                            <div class="modal-content">
+                            <h3>Confirm your password</h3>
+                            <p>Please re-enter your password to continue.</p>
+                
+                            <form id="password-confirm-form" method="POST">
+                                <input type="hidden" id="action-type" name="action_type" value="">
+                                <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                                <input type="hidden" name="delete_media_confirmed" value="' . $itemId . '"></input>
+                                <div class="modal-actions">
+                                    <button type="submit">Confirm</button>
+                                    <button type="button" id="cancel-password-confirm">Cancel</button>
+                                </div>
+                            </form>
+                
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
+                        </div>
+                        </div>';
+
+                        break;
+                    case isset($_POST['delete_loan_confirm']):
+                        $actionType = 'delete_loan';
+                        $itemId = (int)$_POST['delete_loan_confirm'];
+                        $itemName = "Loan ID $itemId";
+                        $actionType = 'delete_loan';
+
+                        echo '<div id="password-confirm-dialog" class="modal popup">
+                            <div class="modal-content">
+                            <h3>Confirm your password</h3>
+                            <p>Please re-enter your password to continue.</p>
+                
+                            <form id="password-confirm-form" method="POST">
+                                <input type="hidden" id="action-type" name="action_type" value="">
+                                <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                                <input type="hidden" name="delete_loan_confirmed" value="' . $itemId . '"></input>
+                                <div class="modal-actions">
+                                    <button type="submit">Confirm</button>
+                                    <button type="button" id="cancel-password-confirm">Cancel</button>
+                                </div>
+                            </form>
+                
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
+                        </div>
+                        </div>';
+
+                        break;
+                    case isset($_POST['edit_media_confirmed']):
+                        $actionType = 'edit_media';
+                        $itemId = (int)$_POST['edit_media_confirmed'];
+                        $itemName = "Media ID $itemId";
+                        $isbn = trim($_POST['isbn']);
+                        $isan = trim($_POST['isan']);
+                        $title = trim($_POST['title']);
+                        $author = trim($_POST['author']);
+                        $type = $_POST['media_type'];
+                        $sabcode_preset = $_POST['sab_code_preset'];
+                        $sabcode_custom = trim($_POST['sab_code_custom']);
+                        $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
+                        $desc = trim($_POST['description']);
+                        $price = (float)$_POST['price'];
+                        $image_url = $_POST['image'] ?? null;
+                        $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
+                        $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
+
+                        echo '<div id="password-confirm-dialog" class="modal popup">
+                            <div class="modal-content">
+                            <h3>Confirm your password</h3>
+                            <p>Please re-enter your password to continue.</p>
+                
+                            <form id="password-confirm-form" method="POST">
+                                <input type="hidden" id="action-type" name="action_type" value="">
+                                <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                                <input type="hidden" name="edit_media_confirmed" value="' . $itemId . '"></input>
+                                <input type="hidden" name="isbn" value="' . htmlspecialchars($isbn) . '"></input>
+                                <input type="hidden" name="isan" value="' . htmlspecialchars($isan) . '"></input>
+                                <input type="hidden" name="title" value="' . htmlspecialchars($title) . '"></input>
+                                <input type="hidden" name="author" value="' . htmlspecialchars($author) . '"></input>
+                                <input type="hidden" name="media_type" value="' . htmlspecialchars($type) . '"></input>
+                                <input type="hidden" name="sab_code_preset" value="' . htmlspecialchars($sabcode_preset) . '"></input>
+                                <input type="hidden" name="sab_code_custom" value="' . htmlspecialchars($sabcode_custom) . '"></input>
+                                <input type="hidden" name="description" value="' . htmlspecialchars($desc) . '"></input>
+                                <input type="hidden" name="price" value="' . htmlspecialchars($price) . '"></input>
+                                <input type="hidden" name="image" value="' . htmlspecialchars($image_url) . '"></input>
+                                <input type="hidden" name="image_width" value="' . htmlspecialchars($image_width) . '"></input>
+                                <input type="hidden" name="image_height" value="' . htmlspecialchars($image_height) . '"></input>
+                                <div class="modal-actions">
+                                    <button type="submit">Confirm</button>
+                                    <button type="button" id="cancel-password-confirm">Cancel</button>
+                                </div>
+                            </form>
+                
+                            <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
+                        </div>
+                        </div>';
+                        break;
+                    
+                    case isset($_POST['edit_copy_confirmed']):
+                        $id = (int)$_POST['edit_copy_confirmed'];
+                        $barcode = trim($_POST['barcode']);
+                        $status = $_POST['status'];
+    
+                        echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="edit_copy_confirmed" value="' . $id . '"></input>
+                            <input type="hidden" name="barcode" value="' . htmlspecialchars($barcode) . '"></input>
+                            <input type="hidden" name="status" value="' . htmlspecialchars($status) . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                        <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
+                    </div>
+                    </div>';
+                        
+                            
+                    default:
+                        $actionType = null;
+                }
+            }
+
+
+            switch (true) {
+                case isset($_POST['delete_user']):
+                    $actionType = 'delete_user';
+                    $itemId = (int)$_POST['delete_user'];
+                    $itemName = "User ID $itemId";
+
+                    echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="delete_user_confirmed" value="' . $itemId . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                        <p id="password-error" class="error hidden"></p>
+                    </div>
+                    </div>';
+
+                    break;
+
+                case isset($_POST['delete_media']):
+                    $actionType = 'delete_media';
+                    $delMedia = $_POST['delete_media'] ?? null;
+                    if (!$isAdmin) {
+                        $delMedia = null;
+                    }
+                    echo popupOutputer($delMedia, $_POST['popup_message']);
+                    break;
+
+                case isset($_POST['confirmed_delete_media']):
+                    $actionType = 'confirmed_delete_media';
+                    $itemId = (int)$_POST['confirmed_delete_media'];
+                    $itemName = "Media ID $itemId";
+                    
+                    echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="delete_media_confirmed" value="' . $itemId . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                        <p id="password-error" class="error hidden"></p>
+                    </div>
+                    </div>';
+
+                    
+                    break;
+                case isset($_POST['delete_copy']):
+                    $actionType = 'delete_copy';
+                    $itemId = (int)$_POST['delete_copy'];
+                    $itemName = "Copy ID $itemId";
+
+                    echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="delete_copy_confirmed" value="' . $itemId . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                        <p id="password-error" class="error hidden"></p>
+                    </div>
+                    </div>';
+
+                    break;
+                case isset($_POST['delete_loan']):
+                    $actionType = 'delete_loan';
+                    $itemId = (int)$_POST['delete_loan'];
+                    $itemName = "Loan ID $itemId";
+
+                    echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="delete_loan_confirmed" value="' . $itemId . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                        <p id="password-error" class="error hidden"></p>
+                    </div>
+                    </div>';
+
+                    break;
+                case isset($_POST['edit_user']):
+                    $actionType = 'edit_user';
+                    $itemId = (int)$_POST['edit_user'];
+                    $username = trim($_POST['username']);
+                    $newPassword = trim($_POST['new_password']);
+                    $isAdmin = isset($_POST['is_admin']) ? (int)$_POST['is_admin'] : 0;
+
+                    echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="edit_user_confirmed" value="' . $itemId . '"></input>
+                            <input type="hidden" name="username" value="' . htmlspecialchars($username) . '"></input>
+                            <input type="hidden" name="new_password" value="' . htmlspecialchars($newPassword) . '"></input>
+                            <input type="hidden" name="is_admin" value="' . htmlspecialchars($isAdmin) . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                        <p id="password-error" class="error hidden"></p>
+                    </div>
+                    </div>';
+
+                    break;
+                case isset($_POST['edit_media']):
+                    $actionType = 'edit_media';
+                    $itemId = (int)$_POST['edit_media'];
+                    $itemName = "Media ID $itemId";
+                    $isbn = trim($_POST['isbn']);
+                    $isan = trim($_POST['isan']);
+                    $title = trim($_POST['title']);
+                    $author = trim($_POST['author']);
+                    $type = $_POST['media_type'];
+                    $sabcode_preset = $_POST['sab_code_preset'];
+                    $sabcode_custom = trim($_POST['sab_code_custom']);
+                    $sabcode = ($sabcode_preset === 'custom') ? $sabcode_custom : $sabcode_preset;
+                    $desc = trim($_POST['description']);
+                    $price = (float)$_POST['price'];
+                    
+                    $image_url = $_POST['image'] ?? null;
+                    $image_width = isset($_POST['image_width']) ? (int)$_POST['image_width'] : null;
+                    $image_height = isset($_POST['image_height']) ? (int)$_POST['image_height'] : null;
+
+                    echo '<div id="password-confirm-dialog" class="modal popup">
+                        <div class="modal-content">
+                        <h3>Confirm your password</h3>
+                        <p>Please re-enter your password to continue.</p>
+            
+                        <form id="password-confirm-form" method="POST">
+                            <input type="hidden" id="action-type" name="action_type" value="">
+                            <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                            <input type="hidden" name="edit_media_confirmed" value="' . $itemId . '"></input>
+                            <input type="hidden" name="isbn" value="' . htmlspecialchars($isbn) . '"></input>
+                            <input type="hidden" name="isan" value="' . htmlspecialchars($isan) . '"></input>
+                            <input type="hidden" name="title" value="' . htmlspecialchars($title) . '"></input>
+                            <input type="hidden" name="author" value="' . htmlspecialchars($author) . '"></input>
+                            <input type="hidden" name="media_type" value="' . htmlspecialchars($type) . '"></input>
+                            <input type="hidden" name="sab_code_preset" value="' . htmlspecialchars($sabcode_preset) . '"></input>
+                            <input type="hidden" name="sab_code_custom" value="' . htmlspecialchars($sabcode_custom) . '"></input>
+                            <input type="hidden" name="description" value="' . htmlspecialchars($desc) . '"></input>
+                            <input type="hidden" name="price" value="' . htmlspecialchars($price) . '"></input>
+                            <input type="hidden" name="image" value="' . htmlspecialchars($image_url) . '"></input>
+                            <input type="hidden" name="image_width" value="' . htmlspecialchars($image_width) . '"></input>
+                            <input type="hidden" name="image_height" value="' . htmlspecialchars($image_height) . '"></input>
+                            <div class="modal-actions">
+                                <button type="submit">Confirm</button>
+                                <button type="button" id="cancel-password-confirm">Cancel</button>
+                            </div>
+                        </form>
+            
+                        <p id="password-error" class="error hidden"></p>
+                    </div>
+                    </div>';
+
+                    break;
+                
+                case isset($_POST['edit_copy']):
+                    $id = (int)$_POST['edit_copy'];
+                    $barcode = trim($_POST['barcode']);
+                    $status = $_POST['status'];
+
+                    echo '<div id="password-confirm-dialog" class="modal popup">
+                    <div class="modal-content">
+                    <h3>Confirm your password</h3>
+                    <p>Please re-enter your password to continue.</p>
+        
+                    <form id="password-confirm-form" method="POST">
+                        <input type="hidden" id="action-type" name="action_type" value="">
+                        <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
+                        <input type="hidden" name="edit_copy_confirmed" value="' . $id . '"></input>
+                        <input type="hidden" name="barcode" value="' . htmlspecialchars($barcode) . '"></input>
+                        <input type="hidden" name="status" value="' . htmlspecialchars($status) . '"></input>
+                        <div class="modal-actions">
+                            <button type="submit">Confirm</button>
+                            <button type="button" id="cancel-password-confirm">Cancel</button>
+                        </div>
+                    </form>
+        
+                    <p id="password-error" class="error hidden"></p>
+                </div>
+                </div>';
+                    break;
+
+
+                default:
+                    $actionType = null;
+            }
+
             // If a div with class "popup" and not class "hidden" exists here it is automatically rendered as a popup
-            popupOutputer();
+            //echo popupOutputer();
         ?>
     </div>
 
@@ -261,6 +770,7 @@ $loans = $pdo->query("
             <button id="media-btn" class="nav-button" onclick="showTab('media')">Media</button>
             <button id="copies-btn" class="nav-button" onclick="showTab('copies')">Copies</button>
             <button id="loans-btn" class="nav-button" onclick="showTab('loans')">Loans</button>
+            <button id="loans-btn" class="nav-button" onclick="showTab('others')">Others</button>
             <a href="index.php" class="back action-button">← Back to User view</a>
         </nav>
 
@@ -404,6 +914,7 @@ $loans = $pdo->query("
                         <button type="button" class="edit action-button" onclick="toggleEditForm(<?php echo $m['id']; ?>, 'media')">Edit</button>
                         <form method="POST" style="display:inline;">
                             <input type="hidden"  name="delete_media" value="<?php echo $m['id']; ?>">
+                            <input type="hidden" name="popup_message" value="<?php echo $m['title'] ?>">
                             <button class="delete action-button" type="submit">Delete</button>
                         </form>
                     </td>
@@ -510,7 +1021,6 @@ $loans = $pdo->query("
             </table>
         </div>
 
-
         <!-- LOANS TAB -->
         <div id="loans" class="tab hidden">
             <h2>Loans</h2>
@@ -535,6 +1045,68 @@ $loans = $pdo->query("
                 </tr>
                 <?php endforeach; ?>
             </table>
+        </div>
+
+        <!-- OTHERS TAB -->
+        <div id="others" class="tab hidden">
+            <section id="features_flags">
+                <h2>Options</h2>
+                <fieldset>
+                    <form method="POST">
+                        <input type="hidden" name="toggle_features" value="1">
+                        <label>
+                            <?php
+                            // CREATE TABLE options (
+                            //     key VARCHAR(255) PRIMARY KEY,
+                            //     value VARCHAR(255) DEFAULT NULL,
+                            //     type VARCHAR(50) DEFAULT NULL
+                            // );
+
+                            // foreach then switch-case for each type: string, bool, boolean, int, float
+                            $getFeaturesSQL = "SELECT * FROM options";
+                            $features = $pdo->query($getFeaturesSQL)->fetchAll();
+                            foreach ($features as $feature) {
+                                $key = htmlspecialchars($feature['name']);
+                                $value = $feature['value'];
+                                $type = $feature['type'];
+
+                                $name = $feature['label'] ?? str_replace('_', ' ', $key);
+
+                                echo "<div class='row'>
+                                    " . ucfirst($name) . ": 
+                                    ";
+                                    
+                                    switch ($type) {
+                                        case 'boolean':
+                                        case 'bool':
+                                            $checked = ($value === '1' || strtolower($value) === 'true') ? 'checked' : '';
+                                            echo '<input type="checkbox" name="feature_' . $key . '" ' . $checked . '>';
+                                            break;
+                                        case 'int':
+                                            echo '<input type="number" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '">';
+                                            break;
+                                        case 'float':
+                                            echo '<input type="number" step="0.01" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '">';
+                                            break;
+                                        case 'string':
+                                        default:
+                                            echo '<input type="text" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '">';
+                                            break;
+                                    }
+
+                                    if (isset($feature['description']) && !empty($feature['description'])) {
+                                        echo "<small class='admin-options-description'>(" . htmlspecialchars($feature['description']) . ")</small>";
+                                    }
+
+                                    echo "<br>";
+                                echo "</div><br>"; 
+                            }
+                            ?>
+                        </label>
+                        <button type="submit">Save</button>
+                    </form>
+                </
+            </section>
         </div>
     </main>
 </body>

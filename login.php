@@ -22,19 +22,37 @@ session_start();
         
         <?php if(isset($_GET['registered'])) echo '<p style="color:green;">Registration successful! You can now log in.</p>'; ?>
         
-        <form method="POST" action="php/auth.php">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="hidden" name="action" id="action" value="login">
-            <button type="submit" id="submit-btn">Login</button>
-        </form>
-        
-        <div class="toggle">
-            <p id="toggle-text"><a href="#" onclick="toggleForm()">Create account</a></p>
-            <a href="./index.php" id="back-button">Back</a>
-        </div>
-    </main>
+        <?php
+        if(isset($_GET['signup'])) {
+            echo '
+            <form method="POST" action="php/auth.php">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="hidden" name="action" id="action" value="register">
+                <button type="submit" id="submit-btn">Create Account</button>
+            </form>
 
-    <script src="./js/login.js"></script>
+            <div class="toggle">
+                <p id="toggle-text"><a href="?login">Login instead</a></p>
+                <a href="./index.php" id="back-button">Back</a>
+            </div>
+            ';
+        } else {
+            echo '
+            <form method="POST" action="php/auth.php">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="hidden" name="action" id="action" value="login">
+                <button type="submit" id="submit-btn">Login</button>
+            </form>
+
+            <div class="toggle">
+                <p id="toggle-text"><a href="?signup">Create account</a></p>
+                <a href="./index.php" id="back-button">Back</a>
+            </div>
+            ';
+        }
+        ?>
+    </main>
 </body>
 </html>

@@ -1,0 +1,185 @@
+<?php
+
+/*
+**Medie borttagning**
+1. Ta bort alla `invoice`s där `loan_id` är ett lån med `copy_id` tillen kopia som har `media_id` samma som mediet
+2. Ta bort alla lån med `copy_id` till en kopia som har `media_id` samma som mediet
+3. Ta bort alla kopior med `media_id` samma som mediet
+4. Ta bort mediet
+
+**Ta bort kopia**
+1. Ta bort alla `invoice`s där `loan_id` är ett lån med `copy_id`samma som kopian
+2. Ta bort alla lån med `copy_id` samma som kopian
+3. Ta bort kopian
+
+**Ta bort användare**
+1. Ta bort alla `invoice`s där `loan_id` är ett lån med `user_id` samma som användaren
+2. Ta bort alla lån  lån med `user_id` samma som användaren
+3. Ta bort användaren
+
+**Ta bort ett lån**
+1. Ta bort alla `invoice`s där `loan_id` är samma som lånet
+2. Ta bort lånet
+*/
+
+/*
+SET FOREIGN_KEY_CHECKS = 0;
+-- Current
+DROP TABLE IF EXISTS copy, invoice, loan, media, user, sab_category, options;
+
+-- Deprecated
+DROP TABLE IF EXISTS category;
+SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE sab_category (
+    sab_code VARCHAR(20) NOT NULL,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE user (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    passwordhash CHAR(64) NOT NULL,
+    is_admin TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT current_timestamp()
+);
+
+CREATE TABLE media (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    isbn VARCHAR(20) DEFAULT NULL,
+    isan VARCHAR(30) DEFAULT NULL,
+    barcode VARCHAR(100) NOT NULL,
+    title VARCHAR(512) NOT NULL,
+    author VARCHAR(255) DEFAULT NULL,
+    media_type ENUM('bok', 'ljudbok', 'film') NOT NULL,
+    image_url MEDIUMTEXT DEFAULT NULL,
+    image_width INT(11) DEFAULT 1, -- Only used for portrait/landscape/square detection
+    image_height INT(11) DEFAULT 2, -- Only used for portrait/landscape/square detection
+    sab_code VARCHAR(150) DEFAULT NULL,
+    description TEXT DEFAULT NULL,
+    price DECIMAL(10,2) DEFAULT 0.00,
+    created_at DATETIME DEFAULT current_timestamp(),
+    updated_at DATETIME DEFAULT current_timestamp()
+);
+
+CREATE TABLE copy (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    media_id INT(11) NOT NULL,
+    barcode VARCHAR(100) NOT NULL,
+    status ENUM('available', 'on_loan', 'lost', 'written_off') DEFAULT 'available',
+    created_at DATETIME DEFAULT current_timestamp(),
+
+    FOREIGN KEY (media_id) REFERENCES media(id)
+);
+
+CREATE TABLE loan (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    copy_id INT(11) NOT NULL,
+    user_id INT(11) NOT NULL,
+    loan_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    return_date DATE DEFAULT NULL,
+    status ENUM('active', 'returned', 'overdue', 'written_off') DEFAULT 'active',
+
+    FOREIGN KEY (copy_id) REFERENCES copy(id),
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+CREATE TABLE invoice (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    user_id INT(11) NOT NULL,
+    loan_id INT(11) DEFAULT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    issued_at DATETIME DEFAULT current_timestamp(),
+    paid TINYINT(1) DEFAULT 0,
+    description TEXT DEFAULT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (loan_id) REFERENCES loan(id)
+);
+
+CREATE TABLE options (
+    name VARCHAR(25) PRIMARY KEY,
+    value VARCHAR(255) DEFAULT NULL,
+    type VARCHAR(50) DEFAULT NULL,
+    label VARCHAR(255) DEFAULT NULL,
+    description VARCHAR(255) DEFAULT NULL
+);
+*/
+
+function deleteMedia(int $mediaId, PDO $pdo): void {
+    // Step 1: Delete invoices related to loans of copies of the media
+    $stmt = $pdo->prepare("
+        DELETE FROM invoice
+        WHERE loan_id IN (
+            SELECT l.id FROM loan l
+            JOIN copy c ON l.copy_id = c.id
+            WHERE c.media_id = ?
+        )
+    ");
+    $stmt->execute([$mediaId]);
+
+    // Step 2: Delete loans of copies of the media
+    $stmt = $pdo->prepare("
+        DELETE l FROM loan l
+        JOIN copy c ON l.copy_id = c.id
+        WHERE c.media_id = ?
+    ");
+    $stmt->execute([$mediaId]);
+
+    // Step 3: Delete copies of the media
+    $stmt = $pdo->prepare("DELETE FROM copy WHERE media_id = ?");
+    $stmt->execute([$mediaId]);
+
+    // Step 4: Delete the media
+    $stmt = $pdo->prepare("DELETE FROM media WHERE id = ?");
+    $stmt->execute([$mediaId]);
+}
+
+function deleteCopy(int $copyId, PDO $pdo): void {
+    // Step 1: Delete invoices related to loans of the copy
+    $stmt = $pdo->prepare("
+        DELETE FROM invoice
+        WHERE loan_id IN (
+            SELECT id FROM loan WHERE copy_id = ?
+        )
+    ");
+    $stmt->execute([$copyId]);
+
+    // Step 2: Delete loans of the copy
+    $stmt = $pdo->prepare("DELETE FROM loan WHERE copy_id = ?");
+    $stmt->execute([$copyId]);
+
+    // Step 3: Delete the copy
+    $stmt = $pdo->prepare("DELETE FROM copy WHERE id = ?");
+    $stmt->execute([$copyId]);
+}
+
+function deleteUser(int $userId, PDO $pdo): void {
+    // Step 1: Delete invoices related to loans of the user
+    $stmt = $pdo->prepare("
+        DELETE FROM invoice
+        WHERE loan_id IN (
+            SELECT id FROM loan WHERE user_id = ?
+        )
+    ");
+    $stmt->execute([$userId]);
+
+    // Step 2: Delete loans of the user
+    $stmt = $pdo->prepare("DELETE FROM loan WHERE user_id = ?");
+    $stmt->execute([$userId]);
+
+    // Step 3: Delete the user
+    $stmt = $pdo->prepare("DELETE FROM user WHERE id = ?");
+    $stmt->execute([$userId]);
+}
+
+function deleteLoan(int $loanId, PDO $pdo): void {
+    // Step 1: Delete invoices related to the loan
+    $stmt = $pdo->prepare("DELETE FROM invoice WHERE loan_id = ?");
+    $stmt->execute([$loanId]);
+
+    // Step 2: Delete the loan
+    $stmt = $pdo->prepare("DELETE FROM loan WHERE id = ?");
+    $stmt->execute([$loanId]);
+}

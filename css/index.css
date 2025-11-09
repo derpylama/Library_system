@@ -33,7 +33,10 @@ button:disabled {
     gap: 20px;
     margin-top: 20px;
 }
-.card {
+
+
+.card, .section-card {
+    display: grid;
     background: white;
     max-width: 25rem;
     padding: 1rem;
@@ -47,10 +50,43 @@ button:disabled {
     line-height: 1.2;
 }
 
-.card .description {
-    margin-top: 0.6rem;
-    overflow: auto;
-    height: 2rem;
+/* .media-title-container {
+    display: grid;
+    place-items: center start;
+    width: 100%;
+    max-width: 20rem;
+    height: 2.95rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+    justify-self: center;
+}
+
+.media-title-container h3 {
+    white-space: pre-wrap;
+    word-break: break-word;
+    width: 100%;
+    text-align: center;
+} */
+
+.card .description-wrapper {
+    margin-top: 0.4rem;
+    width: 100%;
+    max-width: 20rem;
+    height: 1.9rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.5rem 0;
+    margin-bottom: 0.4rem;
+}
+
+.card .description-wrapper > .description {
+    white-space: pre-wrap;
+    word-break: break-word;
+    width: 100%;
+    margin: 0;
 }
 
 .card > details {
@@ -71,7 +107,18 @@ button:disabled {
 .card > form:last-child, .card > button:last-child {
     margin-top: 0.9rem;
 }
+.section-card {
+    max-width: none;
+    background-color: #f1f1f1;
+    margin-bottom: 2rem;
+}
 
+.section-card .section-card-content {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: start;
+}
 .message {
     margin-top: 1rem;
     background: #e6ffe6;
@@ -109,6 +156,8 @@ button:disabled {
     margin-top: 0.25rem;
     margin-bottom: 0.5rem;
     padding: 0 0.5rem;
+    /* align itself center in the card horizontally */
+    justify-self: center;
 }
 
 .media-title-container h3 {
@@ -116,9 +165,6 @@ button:disabled {
     word-break: break-word; /* forces breaks even in long words */
     width: 100%;
     text-align: center;
-}
-
-.media-title-container h3 span {
 }
 
 .media-image {
@@ -161,9 +207,7 @@ button:disabled {
 }
 
 .change-password-button, .change-password-form, .change-password-header {
-    margin-top: 1rem;
-    margin-right: 1rem;
-    justify-self: right;
+    justify-self: left;
 }
 .change-password-header {
     font-size: 1.2rem;
@@ -187,14 +231,13 @@ button:disabled {
 }
 .change-password-container {
     margin-top: 0.5rem;
+    padding-left: 0.5rem;
     display: flex;
-    justify-self: flex-end;
-    flex-direction: column;
+    justify-self: flex-start;
+    flex-direction: row;
     align-items: flex-end;
-    border: 3px solid #ccc;
-    padding: 0 0.5rem 1rem 1.7rem;
-    border-radius: 1rem;
-    
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
 }
 .change-password-message {
     margin-top: 0.5rem;
@@ -212,6 +255,17 @@ button:disabled {
     background: #e6ffe6;
     border: 1px solid #b3ddb3;
 }
+.account-button-card > summary > h2{
+    display: inline;
+}
+.account-button-card > summary {
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+.account-button-card > summary::marker {
+    font-size: 1.5rem;
+}
+
 #top-menu-message {
     margin-top: 1rem;
     background: #ff4141;
@@ -229,4 +283,18 @@ button:disabled {
     padding: 0.5rem;
     border-radius: 0.5rem;
     border: 1px solid #ccc;
+}
+
+.section-card-content form {
+    margin-right: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.section-card-content form > input {
+    margin-bottom: 0;
+}
+
+html:not([data-loggedin="true"]) #all-media-button,
+html:not([data-loggedin="true"]) #my-account-button {
+    display: none;
 }

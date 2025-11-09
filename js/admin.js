@@ -1,9 +1,15 @@
 function showTab(tabName) {
     sessionStorage.setItem('currentTab', tabName);
+
     document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
-    document.getElementById(tabName).classList.remove('hidden');
+
+    const tabNameElem = document.getElementById(tabName)
+    if (tabNameElem) tabNameElem.classList.remove('hidden');
+
     document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(tabName + '-btn').classList.add('active');
+
+    const tabNameBtnElem = document.getElementById(tabName + '-btn');
+    if (tabNameBtnElem) tabNameBtnElem.classList.add('active');
 }
 
 // Handle edit form toggles for both Users and Media
@@ -51,4 +57,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'cancel-password-confirm') {
+            const popup = document.getElementById('password-confirm-dialog');
+            if (popup) popup.remove(); // Removes it from DOM
+        }
+    
+        // Optional: also close if clicking backdrop
+        if (e.target && e.target.id === 'popup-wrapper') {
+            const popup = document.getElementById('password-confirm-dialog');
+            if (popup) popup.remove();
+        }
+    });
 });
