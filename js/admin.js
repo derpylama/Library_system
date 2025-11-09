@@ -51,4 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    document.addEventListener('click', function (e) {
+        console.log(e.target)
+        if (e.target && e.target.id === 'cancel-password-confirm') {
+            const popup = document.getElementById('password-confirm-dialog');
+            if (popup) popup.remove(); // Removes it from DOM
+        }
+    
+        // Optional: also close if clicking backdrop
+        if (e.target && e.target.id === 'popup-wrapper') {
+            const popup = document.getElementById('password-confirm-dialog');
+            if (popup) popup.remove();
+        }
+    });
 });
