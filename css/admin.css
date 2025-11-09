@@ -86,3 +86,9 @@ form.add-form button, form.edit-form button {
     margin-top: 10px;
     display: inline-block;
 }
+
+.admin-options-description {
+    margin-left: 0.6rem;
+    font-style: italic;
+    color: #555;
+}

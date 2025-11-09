@@ -5,8 +5,6 @@ require_once('php/images.php');
 require_once('php/account.php');
 require_once('php/popup.php');
 
-$COLLAPSE_CARD_DETAILS = false;
-
 @session_start();
 
 if (isset($_SESSION['user_id'])) {
@@ -73,7 +71,34 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
+// Fetch all options into an associative array
+$optionsStmt = $pdo->query("SELECT name, value, type FROM options");
+$options = [];
+while ($row = $optionsStmt->fetch()) {
+    $name = $row['name'];
+    $value = $row['value'];
+    $type = $row['type'];
+    // Cast value based on type
+    switch ($type) {
+        case 'boolean':
+        case 'bool':
+            $value = ($value === '1' || strtolower($value) === 'true') ? true : false;
+            break;
+        case 'int':
+            $value = (int)$value;
+            break;
+        case 'float':
+            $value = (float)$value;
+            break;
+        case 'string':
+        default:
+            // Keep as string
+            break;
+    }
+    $options[$name] = $value;
+}
 
+$COLLAPSE_CARD_DETAILS = isset($options['compact_card_details']) ? boolval($options['compact_card_details']) : false;
 
 // Fetch all media
 $mediaQuery = "
@@ -149,11 +174,15 @@ if (isset($_SESSION['user_id'])) {
     </div>
 
     <header>
-        <?php 
-            if (isset($_SESSION["user_id"])){
-                echo "<h2>Welcome, " . htmlspecialchars($username) . "</h2>";
-            }else{
-                echo "<h2>Welcome</h2>";
+        <?php
+            if (isset($options["library_name"]) && !empty($options["library_name"])) {
+                echo "<h1>" . htmlspecialchars($options["library_name"]) . "</h1>";
+            } else {
+                if (isset($_SESSION["user_id"])){
+                    echo "<h2>Welcome, " . htmlspecialchars($username) . "</h2>";
+                }else{
+                    echo "<h2>Welcome</h2>";
+                }
             }
         ?>
         <p id="top-menu-message" style="display: none;"></p>

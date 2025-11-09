@@ -77,5 +77,10 @@ CREATE TABLE options (
     name VARCHAR(25) PRIMARY KEY,
     value VARCHAR(255) DEFAULT NULL,
     type VARCHAR(50) DEFAULT NULL,
-    label VARCHAR(255) DEFAULT NULL
+    label VARCHAR(255) DEFAULT NULL,
+    description VARCHAR(255) DEFAULT NULL
 );
+
+INSERT INTO options (name, value, type, description) VALUES
+('library_name', '', 'string', 'Name of the library, shown as title in the UI'),
+('compact_card_details', 'false', 'bool', 'If enabled, details of media cards are in a dropdown');

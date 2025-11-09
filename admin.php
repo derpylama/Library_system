@@ -1052,19 +1052,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                                         case 'boolean':
                                         case 'bool':
                                             $checked = ($value === '1' || strtolower($value) === 'true') ? 'checked' : '';
-                                            echo '<input type="checkbox" name="feature_' . $key . '" ' . $checked . '><br>';
+                                            echo '<input type="checkbox" name="feature_' . $key . '" ' . $checked . '>';
                                             break;
                                         case 'int':
-                                            echo '<input type="number" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            echo '<input type="number" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '">';
                                             break;
                                         case 'float':
-                                            echo '<input type="number" step="0.01" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            echo '<input type="number" step="0.01" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '">';
                                             break;
                                         case 'string':
                                         default:
-                                            echo '<input type="text" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '"><br>';
+                                            echo '<input type="text" name="feature_' . $key . '" value="' . htmlspecialchars($value) . '">';
                                             break;
                                     }
+
+                                    if (isset($feature['description']) && !empty($feature['description'])) {
+                                        echo "<small class='admin-options-description'>(" . htmlspecialchars($feature['description']) . ")</small>";
+                                    }
+
+                                    echo "<br>";
                                 echo "</div><br>"; 
                             }
                             ?>
