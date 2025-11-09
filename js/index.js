@@ -1,8 +1,14 @@
 function toggleView(view) {
     sessionStorage.setItem('currentView', view);
-    document.getElementById('all-media-view').classList.add('hidden');
-    document.getElementById('my-account-view').classList.add('hidden');
-    document.getElementById(view).classList.remove('hidden');
+    
+    const allMediaViewBtn = document.getElementById('all-media-view')
+    if (allMediaViewBtn) allMediaViewBtn.classList.add('hidden');
+
+    const myAccountViewBtn = document.getElementById('my-account-view')
+    if (myAccountViewBtn) myAccountViewBtn.classList.add('hidden');
+
+    const viewElem = document.getElementById(view);
+    if (viewElem) viewElem.classList.remove('hidden');
 
     const savedView = sessionStorage.getItem('currentView') || 'all-media-view';
 
@@ -65,13 +71,21 @@ document.addEventListener('DOMContentLoaded', function() {
         allMediaButton.classList.remove('hidden');
     }
 
-    document.getElementById('all-media-view').addEventListener('click', function() {
-        toggleView('all-media-view');
-    });
+    //document.getElementById('all-media-view').addEventListener('click', function() {
+    const allMediaViewBtn2 = document.getElementById('all-media-view');
+    if (allMediaViewBtn2) {
+        allMediaViewBtn2.addEventListener('click', function() {
+            toggleView('all-media-view');
+        });
+    }
 
-    document.getElementById('my-account-view').addEventListener('click', function() {
-        toggleView('my-account-view');
-    });
+    //document.getElementById('my-account-view').addEventListener('click', function() {
+    const myAccountViewBtn2 = document.getElementById('my-account-view');
+    if (myAccountViewBtn2) {
+        myAccountViewBtn2.addEventListener('click', function() {
+            toggleView('my-account-view');
+        });
+    }
 
     var mediaLoanButtons = document.querySelectorAll(".media-loan-button");
 
