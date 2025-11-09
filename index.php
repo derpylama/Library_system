@@ -3,6 +3,9 @@ require_once('php/db.php');
 require_once('php/search.php');
 require_once('php/images.php');
 require_once('php/account.php');
+require_once('php/get_recomendations.php');
+
+$COLLAPSE_CARD_DETAILS = false;
 require_once('php/popup.php');
 
 @session_start();
@@ -71,6 +74,13 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
+// MARK: RECOMMENDATIONS
+if (isset($_SESSION['user_id'])) {
+    $recomuserid = $_SESSION['user_id'];
+} else {
+    $recomuserid = -1; // Guest user
+}
+$recommendations = getRecommendations($pdo, $recomuserid, 50, 10, true, 0.7);
 // Fetch all options into an associative array
 $optionsStmt = $pdo->query("SELECT name, value, type FROM options");
 $options = [];
@@ -99,6 +109,15 @@ while ($row = $optionsStmt->fetch()) {
 }
 
 $COLLAPSE_CARD_DETAILS = isset($options['compact_card_details']) ? boolval($options['compact_card_details']) : false;
+
+// Fetch media details
+$recommendedMediaList = [];
+if (!empty($recommendations)) {
+    $inQuery = implode(',', array_fill(0, count($recommendations), '?'));
+    $stmt = $pdo->prepare("SELECT * FROM media WHERE id IN ($inQuery) ORDER BY FIELD(id, $inQuery)");
+    $stmt->execute(array_merge($recommendations, $recommendations));
+    $recommendedMediaList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 // Fetch all media
 $mediaQuery = "
@@ -158,7 +177,9 @@ if (isset($_SESSION['user_id'])) {
     <title>User Dashboard</title>
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/recomendation.css">
     <script src="js/index.js"></script>
+    <script src="js/recomendation.js" defer></script>
 </head>
 <body>
     <!-- popup-wrapper-with-backdrop or with-click-through are functional classes -->
@@ -235,6 +256,28 @@ if (isset($_SESSION['user_id'])) {
                 <button type="submit">Search</button>
             </form>
         </div>
+
+                <?php 
+                // MARK: RECOMMENDATIONS
+                ?>
+
+            <details id="recommendations-details" <?= empty($searchTerm) ? 'open' : '' ?>>
+                <summary>Toggle recommendations</summary>
+
+                <div class="carousel-container" id="carousel-container">
+                    <div class="arrow arrow-left">&#8249;</div>
+                    <div class="arrow arrow-right">&#8250;</div>
+                    <div class="recommendation-row" id="carousel">
+                        <?php foreach ($recommendedMediaList as $media): ?>
+                            <div class="favorite-media-card">
+                                <img src="<?= htmlspecialchars($media['image_url']) ?>" alt="<?= htmlspecialchars($media['title']) ?>">
+                                <div class="title"><?= htmlspecialchars($media['title']) ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </details>
+
 
         <div class="grid">
             
