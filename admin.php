@@ -3,6 +3,7 @@ require_once('php/db.php');
 require_once('php/barcode.php');
 require_once('php/images.php');
 require_once('php/popup.php');
+require_once('php/deletion_helpers.php');
 
 session_start();
 
@@ -138,7 +139,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_copy'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_confirmed'])) {
     if ($passwordConfirmed) {
         $id = (int)$_POST['delete_user_confirmed'];
-        $pdo->prepare("DELETE FROM user WHERE id = ?")->execute([$id]);
+        //$pdo->prepare("DELETE FROM user WHERE id = ?")->execute([$id]);
+        deleteUser($id, $pdo);
         $message = "User ID $id deleted.";
     }
 }
@@ -167,7 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_confirmed']
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media_confirmed'])) {
     if($passwordConfirmed){
         $id = (int)$_POST['delete_media_confirmed'];
-        $pdo->prepare("DELETE FROM media WHERE id = ?")->execute([$id]);
+        //$pdo->prepare("DELETE FROM media WHERE id = ?")->execute([$id]);
+        deleteMedia($id, $pdo);
         $message = "Media ID $id deleted.";
     }    
 }
@@ -237,7 +240,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_copy_confirmed']
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_copy_confirmed'])) {
     if ($passwordConfirmed){
         $id = (int)$_POST['delete_copy_confirmed'];
-        $pdo->prepare("DELETE FROM copy WHERE id = ?")->execute([$id]);
+        //$pdo->prepare("DELETE FROM copy WHERE id = ?")->execute([$id]);
+        deleteCopy($id, $pdo);
         $message = "Copy ID $id deleted.";
     }    
 }
@@ -246,7 +250,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_copy_confirmed
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan_confirmed'])) {
     if ($passwordConfirmed){
         $id = (int)$_POST['delete_loan_confirmed'];
-        $pdo->prepare("DELETE FROM loan WHERE id = ?")->execute([$id]);
+        //$pdo->prepare("DELETE FROM loan WHERE id = ?")->execute([$id]);
+        deleteLoan($id, $pdo);
         $message = "Loan ID $id deleted.";
     }    
 }
@@ -591,7 +596,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                         <form id="password-confirm-form" method="POST">
                             <input type="hidden" id="action-type" name="action_type" value="">
                             <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
-                            <input type="hidden" name="delete_copy_confirm" value="' . $itemId . '"></input>
+                            <input type="hidden" name="delete_copy_confirmed" value="' . $itemId . '"></input>
                             <div class="modal-actions">
                                 <button type="submit">Confirm</button>
                                 <button type="button" id="cancel-password-confirm">Cancel</button>
@@ -616,7 +621,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                         <form id="password-confirm-form" method="POST">
                             <input type="hidden" id="action-type" name="action_type" value="">
                             <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
-                            <input type="hidden" name="delete_loan_confirm" value="' . $itemId . '"></input>
+                            <input type="hidden" name="delete_loan_confirmed" value="' . $itemId . '"></input>
                             <div class="modal-actions">
                                 <button type="submit">Confirm</button>
                                 <button type="button" id="cancel-password-confirm">Cancel</button>
