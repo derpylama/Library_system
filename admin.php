@@ -222,9 +222,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_media_confirmed'
 }
 
 // Edit copy
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_copy_confirm'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_copy_confirmed'])) {
     if ($passwordConfirmed){
-        $id = (int)$_POST['edit_copy_confirm'];
+        $id = (int)$_POST['edit_copy_confirmed'];
         $barcode = trim($_POST['barcode']);
         $status = $_POST['status'];
         $stmt = $pdo->prepare("UPDATE copy SET barcode=?, status=? WHERE id=?");
@@ -234,16 +234,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_copy_confirm']))
 }
 
 // Delete copy
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_copy_confirm'])) {
-    $id = (int)$_POST['delete_copy_confirm'];
-    $pdo->prepare("DELETE FROM copy WHERE id = ?")->execute([$id]);
-    $message = "Copy ID $id deleted.";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_copy_confirmed'])) {
+    if ($passwordConfirmed){
+        $id = (int)$_POST['delete_copy_confirmed'];
+        $pdo->prepare("DELETE FROM copy WHERE id = ?")->execute([$id]);
+        $message = "Copy ID $id deleted.";
+    }    
 }
 
 // Delete loan
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan_confirm'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_loan_confirmed'])) {
     if ($passwordConfirmed){
-        $id = (int)$_POST['delete_loan_confirm'];
+        $id = (int)$_POST['delete_loan_confirmed'];
         $pdo->prepare("DELETE FROM loan WHERE id = ?")->execute([$id]);
         $message = "Loan ID $id deleted.";
     }    
@@ -329,7 +331,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
 
             // delete_user => delete_user_confirmed
             // ...
-            //MARK: Password Needs to be checked before sending the action through
+            
             if($passwordConfirmed === false){
 
                 switch (true) {
@@ -429,7 +431,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                             <form id="password-confirm-form" method="POST">
                                 <input type="hidden" id="action-type" name="action_type" value="">
                                 <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
-                                <input type="hidden" name="delete_loan_confirm" value="' . $itemId . '"></input>
+                                <input type="hidden" name="delete_loan_confirmed" value="' . $itemId . '"></input>
                                 <div class="modal-actions">
                                     <button type="submit">Confirm</button>
                                     <button type="button" id="cancel-password-confirm">Cancel</button>
@@ -483,6 +485,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                             <p id="password-error" class="error">' . htmlspecialchars($passwordError) . '</p>
                         </div>
                         </div>';
+                        break;
                     
                     case isset($_POST['edit_copy_confirmed']):
                         $id = (int)$_POST['edit_copy_confirmed'];
@@ -497,7 +500,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                         <form id="password-confirm-form" method="POST">
                             <input type="hidden" id="action-type" name="action_type" value="">
                             <input type="password" id="confirm-password-input" name="password" placeholder="Enter your password" required>
-                            <input type="hidden" name="edit_copy_confirm" value="' . $id . '"></input>
+                            <input type="hidden" name="edit_copy_confirmed" value="' . $id . '"></input>
                             <input type="hidden" name="barcode" value="' . $barcode . '"></input>
                             <input type="hidden" name="status" value="' . $status . '"></input>
                             <div class="modal-actions">
