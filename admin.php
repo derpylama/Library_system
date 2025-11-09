@@ -556,9 +556,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                     </div>';
 
                     break;
+
                 case isset($_POST['delete_media']):
                     $actionType = 'delete_media';
-                    $itemId = (int)$_POST['delete_media'];
+                    $delMedia = $_POST['delete_media'] ?? null;
+                    if (!$isAdmin) {
+                        $delMedia = null;
+                    }
+                    echo popupOutputer($delMedia, $_POST['popup_message']);
+                    break;
+
+                case isset($_POST['confirmed_delete_media']):
+                    $actionType = 'confirmed_delete_media';
+                    $itemId = (int)$_POST['confirmed_delete_media'];
                     $itemName = "Media ID $itemId";
                     
                     echo '<div id="password-confirm-dialog" class="modal popup">
