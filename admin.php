@@ -51,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
 
 // --- ACTIONS ---
 $message = "";
+
 // Add new media
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_media'])) {
     $isbn = trim($_POST['isbn']);
@@ -615,8 +616,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                         <p id="password-error" class="error hidden"></p>
                     </div>
                     </div>';
-
                     break;
+
                 case isset($_POST['delete_loan']):
                     $actionType = 'delete_loan';
                     $itemId = (int)$_POST['delete_loan'];
@@ -986,7 +987,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_features'])) {
                     <th>Actions</th>
                 </tr>
                 <?php
-                $copies = $pdo->query("SELECT copy.id, copy.media_id, copy.barcode, copy.status, media.id, media.title FROM `copy` JOIN media ON copy.media_id = media.id")->fetchAll();
+                $copies = $pdo->query("SELECT copy.id, copy.media_id, copy.barcode, copy.status, media.title FROM copy JOIN media ON copy.media_id = media.id")->fetchAll();
                 foreach ($copies as $cp): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($cp['title']); ?></td>
