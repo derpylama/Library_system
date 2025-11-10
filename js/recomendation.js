@@ -206,9 +206,25 @@ recommendationRow.addEventListener('click', (event) => {
     }
 });
 
-
-
-
-
-
 });
+
+
+//MARK: bad solution to returning to switching views 
+
+// Turn carousel on when "All Media" button is clicked
+const allMediaBtn = document.getElementById('all-media-button');
+if (allMediaBtn) {
+    allMediaBtn.addEventListener('click', () => {
+        isCarouselOn = true;
+        startCarousel(); // optional: immediately start scrolling
+    });
+}
+
+// Turn carousel off when "My Account" button is clicked
+const myAccountBtn = document.getElementById('my-account-button');
+if (myAccountBtn) {
+    myAccountBtn.addEventListener('click', () => {
+        isCarouselOn = false;
+        stopCarousel(); // optional: immediately stop scrolling
+    });
+}
