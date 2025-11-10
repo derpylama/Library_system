@@ -269,7 +269,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="arrow arrow-right">&#8250;</div>
                     <div class="recommendation-row" id="carousel">
                         <?php foreach ($recommendedMediaList as $media): ?>
-                            <div class="favorite-media-card">
+                            <div class="favorite-media-card" data-id="<?= htmlspecialchars($media['id']) ?>">
                                 <img src="<?= htmlspecialchars($media['image_url']) ?>" alt="<?= htmlspecialchars($media['title']) ?>">
                                 <div class="title"><?= htmlspecialchars($media['title']) ?></div>
                             </div>
@@ -433,7 +433,7 @@ if (isset($_SESSION['user_id'])) {
                 $showsISBNorISAN = ($media['media_type'] !== 'film') ? isset($media['isbn']) : isset($media['isan']);
 
                 echo '
-                <div class="card" '.cardSize($imageSize).'>
+                <div class="card" '.cardSize($imageSize).' data-id="' . $media['id'] . '">
                     <div class="media-title-container">
                         <h3>' . $media['title'] . '</h3>
                     </div>

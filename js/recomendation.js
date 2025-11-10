@@ -186,13 +186,30 @@ recommendationRow.addEventListener('click', (event) => {
     const card = event.target.closest('.favorite-media-card');
     if (!card) return;
 
-    const title = normalizeTitle(card.querySelector('.title')?.textContent);
-    if (!title) return;
+    // const title = normalizeTitle(card.querySelector('.title')?.textContent);
+    // if (!title) return;
 
-    const matchingCard = Array.from(document.querySelectorAll('.card')).find(c => {
-        const cardTitle = normalizeTitle(c.querySelector('.media-title-container h3')?.textContent);
-        return cardTitle === title;
-    });
+    const dataId = card.dataset.id;
+    if (!dataId) return;
+
+    // const matchingCard = Array.from(document.querySelectorAll('.card')).find(c => {
+    //     const cardTitle = normalizeTitle(c.querySelector('.media-title-container h3')?.textContent);
+    //     return cardTitle === title;
+    // });
+
+    // document.querySelectorAll(`.card[data-id="${dataId}"]`) // Find first match from query
+    let matchingCard = document.querySelector(`.card[data-id="${dataId}"]`);
+    
+    // If not matchingCard match by title
+    if (!matchingCard) {
+        const title = normalizeTitle(card.querySelector('.title')?.textContent);
+        if (!title) return;
+
+        matchingCard = Array.from(document.querySelectorAll('.card')).find(c => {
+            const cardTitle = normalizeTitle(c.querySelector('.media-title-container h3')?.textContent);
+            return cardTitle === title;
+        });
+    }
 
     if (matchingCard) {
         matchingCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
