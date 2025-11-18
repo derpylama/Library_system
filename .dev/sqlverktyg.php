@@ -44,6 +44,8 @@ function render_form($host='', $port='', $user='', $pass='', $db='') {
     <textarea name="sqlquery" placeholder="Ange SQL här..."></textarea>
 
     <button type="submit" name="run">Kör SQL</button>
+
+    <i>Verktyg gjort av <a href="https://github.com/sbamboo">@sbamboo</a> (SimonKC)</i>
 </form>
 HTML;
 }
